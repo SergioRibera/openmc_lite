@@ -1,0 +1,10 @@
+[package]
+name = "openmc_lite"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+druid = "0.7.0"
+env_logger = "0.10.0"
+log = "0.4.17"
+tokio = "1.24.2"
