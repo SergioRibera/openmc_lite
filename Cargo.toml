@@ -3,8 +3,34 @@ name = "openmc_lite"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+opt-level = "z" # Optimize for size.
+strip = true    # Automatically strip symbols from the binary.
+lto = true
+
 [dependencies]
-druid = "0.7.0"
+mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", branch = "simple_refactor" }
+
+iced = { version = "0.7.0", features = ["image"] }
+iced_native = "0.8.0"
+iced_aw = "0.3.0"
+
 env_logger = "0.10.0"
 log = "0.4.17"
-tokio = "1.24.2"
+app_dirs = { package = "app_dirs2", version = "2.5.4" }
+preferences = { git = "https://github.com/SergioRibera/preferences-rs", branch = "main", features = [
+    "security",
+] }
+serde = "1.0.152"
+serde_derive = "1.0.152"
+toml = "0.7.2"
+# marcel = { git = "https://github.com/SergioRibera/marcel", tag = "0.2.10" }
+marcel = { path = "../../../../Contributions/Rust/marcel" }
+once_cell = "1.14.0"
+clap = { version = "4.1.4", features = [
+    "env",
+    "wrap_help",
+    "derive",
+    "color",
+    "suggestions",
+] }

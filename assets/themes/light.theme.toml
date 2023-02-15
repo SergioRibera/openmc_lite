@@ -1,0 +1,79 @@
+name = "Light"
+description = "Light Theme"
+
+[application]
+background_color = "background-color"
+text_color = "foreground-color"
+
+[border.border_1]
+color = "color_5"
+radius = 0.0
+width = 0.0
+
+[border.default]
+color = "color_5"
+radius = 5.0
+width = 0.0
+
+[button.default-tab.active]
+type = "Defined"
+background = "color_5"
+text = "text-color"
+border = "border_1"
+
+[button.default-tab.hovered]
+type = "Defined"
+background = "color_6"
+text = "text-color"
+border = "border_1"
+
+[button.default-tab.pressed]
+type = "Defined"
+background = "color_7"
+text = "text-color"
+border = "border_1"
+
+[button.default-tab.disabled]
+type = "Defined"
+background = "color_5"
+text = "color_8"
+border = "border_1"
+
+[button.window-action.active]
+type = "Defined"
+background = "foreground-color"
+text = "text-color"
+border = "default"
+
+[button.window-action.hovered]
+type = "Defined"
+background = "color_6"
+text = "text-color"
+border = "default"
+
+[button.window-action.pressed]
+type = "Defined"
+background = "color_7"
+text = "text-color"
+border = "default"
+
+[button.window-action.disabled]
+type = "Defined"
+background = "color_5"
+text = "color_8"
+border = "default"
+
+[color]
+brand-color = "rgba(0, 181, 216, 1)"
+detail-text-color = "rgba(36, 36, 36, 1)"
+text-color = "rgba(18, 18, 18, 1)"
+foreground-color = "#121212"
+background-color = "#fafafa"
+color_5 = "black"
+color_6 = "rgba(0, 0, 0, 0.5)"
+color_7 = "rgba(0, 0, 0, 0.3)"
+color_8 = "rgba(64, 64, 64, 1)"
+
+[container.default]
+color = "color_5"
+border = "default"

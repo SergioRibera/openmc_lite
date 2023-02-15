@@ -10,6 +10,8 @@ on:
 
 jobs:
   build:
+    env:
+      OPENMC_ENCRYPT_KEY: ${{ secrets.OPENMC_ENCRYPT_KEY }}
     strategy:
       fail-fast: false
       matrix:
