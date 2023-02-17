@@ -1,63 +1,33 @@
-use iced::Padding;
-use iced_aw::FloatingElement;
-use marcel::Theme;
+use eframe::egui::{ComboBox, Layout, Margin, RichText, Ui};
 
-use crate::{
-    settings::LauncherSettings,
-    widgets::{Button, Column, Container, Element, Row, Text},
-    MainMessage,
-};
+use crate::{resources::ResourceLoader, settings::LauncherSettings};
 
-pub fn home<'a>(conf: LauncherSettings, theme: &Theme) -> Element<'a, MainMessage> {
-    let floating = FloatingElement::new(background(theme), move || {
-        let conf = conf.clone();
-        Row::new()
-            // .push(pick_list(
-            //     conf.instances,
-            //     conf.last_launched,
-            //     MainMessage::LauncherInstanceChanged,
-            // ))
-            .push(
-                Container::new(
-                    Button::new(
-                        Text::from("Run Instance")
-                            .size(40)
-                            .vertical_alignment(iced::alignment::Vertical::Center)
-                            .horizontal_alignment(iced::alignment::Horizontal::Center),
-                    )
-                    .width(iced::Length::Units(300))
-                    .height(iced::Length::Units(60))
-                    .style(theme.get_button(&"default".to_string()))
-                    .padding(Padding::new(5)),
-                )
-                .width(iced::Length::Fill)
-                .style(theme.get_container(&"default".to_string()))
-                .center_x(),
-            )
-            .height(iced::Length::Shrink)
-            .width(iced::Length::Shrink)
-            .align_items(iced::Alignment::Center)
-            .spacing(10)
-            .padding(Padding::new(10))
-            .into()
-    })
-    .anchor(iced_aw::floating_element::Anchor::SouthWest);
-    Column::new()
-        .push(floating)
-        .height(iced::Length::Fill)
-        .width(iced::Length::Fill)
-        .align_items(iced::Alignment::Center)
-        .into()
-}
-
-pub fn background<'a>(theme: &Theme) -> Element<'a, MainMessage> {
-    Container::new(
-        image(format!("{}/assets/bg.jpg", env!("CARGO_MANIFEST_DIR")))
-            .width(iced::Length::Fill)
-            .height(iced::Length::Fill)
-            .content_fit(iced::ContentFit::Cover),
-    )
-    .width(iced::Length::Fill)
-    .style(theme.get_container(&"default".to_string()))
-    .center_x()
+pub fn home(ui: &mut Ui, conf: &LauncherSettings, res: &ResourceLoader) {
+    let mut value = conf
+        .last_launched
+        .clone()
+        .map(|l| l.name)
+        .unwrap_or_default();
+    eframe::egui::Frame::default()
+        .inner_margin(Margin::same(0.))
+        .rounding(0.)
+        .show(ui, |ui| {
+            ui.image(res.home_bg.texture_id(ui.ctx()), ui.available_size());
+            ui.with_layout(Layout::bottom_up(eframe::emath::Align::Min), |ui| {
+                ui.add_space(50.);
+                ui.horizontal(|ui| {
+                    ComboBox::from_label("Select Version")
+                        .selected_text(value.as_str())
+                        .show_ui(ui, |ui| {
+                            ui.style_mut().wrap = Some(false);
+                            ui.set_min_width(60.0);
+                            conf.instances.iter().for_each(|i| {
+                                ui.selectable_value(&mut value, i.name.clone(), i.name.clone());
+                            })
+                        });
+                    ui.add_space((ui.available_width() / 2.) - 20.);
+                    let _btn_play = ui.button(RichText::new("Jugar").size(32.));
+                });
+            });
+        });
 }

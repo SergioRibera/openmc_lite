@@ -1,45 +1,25 @@
-use iced::{
-    widget::{button, Column},
-    Padding,
-};
-use iced_aw::Grid;
+use eframe::egui::{Grid, RichText, Ui};
 
-use crate::{
-    settings::{LauncherInstance, LauncherSettings},
-    MainMessage,
-};
+use crate::settings::LauncherSettings;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum InstanceEvent {
-    Add,
-    Show,
-}
-
-pub fn instances<'a>(conf: LauncherSettings) -> iced::Element<'a, MainMessage> {
-    let mut grid = Grid::with_columns(3).push(
-        button("Add New")
-            .padding(Padding::new(20))
-            .width(iced::Length::Fill)
-            .width(iced::Length::Units(300))
-            .on_press(MainMessage::InstanceView(InstanceEvent::Add)),
-    );
-    for instance in conf.instances.iter() {
-        grid.insert(instance_element(instance));
-    }
-
-    grid.into()
-    // .height(iced::Length::Shrink)
-    // .width(iced::Length::Shrink)
-    // .align_items(iced::Alignment::Center)
-    // .spacing(10)
-    // .padding(Padding::new(10))
-    // .into()
-}
-
-fn instance_element<'a>(instance: &LauncherInstance) -> iced::Element<'a, MainMessage> {
-    Column::new()
-        .height(iced::Length::Fill)
-        .width(iced::Length::Fill)
-        .align_items(iced::Alignment::Center)
-        .into()
+pub fn instances(ui: &mut Ui, conf: &LauncherSettings) {
+    Grid::new("Instances")
+        .num_columns(4)
+        .striped(true)
+        .spacing((10., 10.))
+        .min_col_width(300.)
+        .min_row_height(300.)
+        .show(ui, |ui| {
+            let text_size = 20.;
+            let add_btn = ui.add(
+                eframe::egui::Button::new(RichText::new("Create Instance").size(text_size))
+                    .min_size(ui.available_size()),
+            );
+            if add_btn.clicked() {
+                println!("Add");
+            }
+            conf.instances.iter().for_each(|i| {
+                ui.label(RichText::new(i.name.clone()).size(text_size));
+            });
+        });
 }
