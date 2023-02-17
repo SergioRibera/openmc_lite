@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 
 use crate::data::theme::ThemeType;
 
-#[derive(Parser, Debug, Clone)]
+#[derive(Parser, Clone)]
 #[clap(author, version, about)]
 pub struct OpenMCArgs {
     #[clap(short, long, env = "OPENMC_THEME", default_value = "light")]

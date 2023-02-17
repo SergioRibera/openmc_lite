@@ -1,17 +1,17 @@
-use std::fs;
+use std::{fs, path::PathBuf};
 
 use clap::ValueEnum;
-use marcel::{serial::Theme as SerializeTheme, Theme};
+use egui_stylist::StylistState;
 use serde::{de::Visitor, Deserialize, Serialize};
 
 use crate::data::{APP_FOLDER, APP_INFO};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone, PartialEq)]
 pub enum ThemeType {
     #[default]
     Light,
     Dark,
-    Custom(Theme),
+    Custom((String, StylistState)),
 }
 
 impl From<&str> for ThemeType {
@@ -23,41 +23,20 @@ impl From<&str> for ThemeType {
             "dark" => ThemeType::Dark,
             path_str => {
                 let content = fs::read_to_string(path_str).unwrap();
-                let serialize_theme = toml::from_str::<SerializeTheme>(&&content).unwrap();
-                let theme = Theme::parse(&serialize_theme.clone()).unwrap();
-                ThemeType::Custom(theme)
+                let theme = toml::from_str::<StylistState>(&&content).unwrap();
+                let theme_name = format!("{:?}", PathBuf::from(path_str).file_name().unwrap());
+                ThemeType::Custom((theme_name, theme))
             }
         }
     }
 }
 
 impl ThemeType {
-    pub fn apply(&self) -> Theme {
+    pub fn apply(&self) -> StylistState {
         match self {
             ThemeType::Light => super::LIGHT.to_owned(),
             ThemeType::Dark => super::DARK.to_owned(),
-            ThemeType::Custom(theme) => theme.clone(),
-        }
-    }
-}
-
-impl iced::application::StyleSheet for ThemeType {
-    type Style = ThemeType;
-
-    fn appearance(&self, style: &Self::Style) -> iced::application::Appearance {
-        match style {
-            ThemeType::Light => iced::application::Appearance {
-                background_color: super::LIGHT.application.background_color.into(),
-                text_color: super::LIGHT.application.text_color.into(),
-            },
-            ThemeType::Dark => iced::application::Appearance {
-                background_color: super::DARK.application.background_color.into(),
-                text_color: super::DARK.application.text_color.into(),
-            },
-            ThemeType::Custom(theme) => iced::application::Appearance {
-                background_color: theme.application.background_color.into(),
-                text_color: theme.application.text_color.into(),
-            },
+            ThemeType::Custom((_, theme)) => theme.clone(),
         }
     }
 }
@@ -70,8 +49,8 @@ impl Serialize for ThemeType {
         match self {
             ThemeType::Light => serializer.serialize_str("light"),
             ThemeType::Dark => serializer.serialize_str("light"),
-            ThemeType::Custom(theme) => {
-                let theme_name = theme.name.to_lowercase().replace(' ', "");
+            ThemeType::Custom((name, theme)) => {
+                let theme_name = name.to_lowercase().replace(' ', "_");
                 let mut theme_file =
                     app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, APP_FOLDER)
                         .unwrap();
@@ -79,7 +58,7 @@ impl Serialize for ThemeType {
                 fs::create_dir_all(&theme_file).unwrap();
                 theme_file.push(&format!("{theme_name}.theme.toml"));
 
-                let content = toml::to_string(&SerializeTheme::from(theme.clone())).unwrap();
+                let content = toml::to_string(&theme).unwrap();
                 fs::write(&theme_file, content).unwrap();
                 serializer.serialize_str(theme_file.to_str().unwrap())
             }
