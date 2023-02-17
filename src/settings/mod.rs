@@ -1,6 +1,5 @@
 use crate::{
-    args::{OpenMCArgs, OpenMCommands},
-    ThemeType,
+    args::{OpenMCArgs, OpenMCommands}, data::theme::ThemeType,
 };
 use clap::Parser;
 use serde::{Deserialize, Serialize};
@@ -12,7 +11,7 @@ pub use load::load_settings;
 pub use save::save_settings;
 
 // Data to save and load into preferences
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 pub struct LauncherSettings {
     pub(crate) theme: ThemeType,
     pub(crate) last_launched: Option<LauncherInstance>,
@@ -60,6 +59,10 @@ impl LauncherSettings {
         cfg.theme = opts.theme.unwrap_or(ThemeType::Light);
 
         cfg
+    }
+
+    pub fn save(&self) -> bool {
+        save_settings::<Self>(self.clone(), "launcher.conf")
     }
 }
 
