@@ -1,10 +1,12 @@
-use std::{fs, path::PathBuf};
+use std::{fs, path::PathBuf, fmt::Debug};
 
 use clap::ValueEnum;
+use egui::Context;
 use egui_stylist::StylistState;
+use log::debug;
 use serde::{de::Visitor, Deserialize, Serialize};
 
-use crate::data::{APP_FOLDER, APP_INFO};
+use crate::data::APP_INFO;
 
 #[derive(Default, Clone, PartialEq)]
 pub enum ThemeType {
@@ -22,6 +24,7 @@ impl From<&str> for ThemeType {
             "light" => ThemeType::Light,
             "dark" => ThemeType::Dark,
             path_str => {
+                debug!("Reading theme from: {path_str}");
                 let content = fs::read_to_string(path_str).unwrap();
                 let theme = toml::from_str::<StylistState>(&&content).unwrap();
                 let theme_name = format!("{:?}", PathBuf::from(path_str).file_name().unwrap());
@@ -32,11 +35,25 @@ impl From<&str> for ThemeType {
 }
 
 impl ThemeType {
-    pub fn apply(&self) -> StylistState {
-        match self {
+    pub fn apply(&self, ctx: &Context) -> StylistState {
+        let t = match self {
             ThemeType::Light => super::LIGHT.to_owned(),
             ThemeType::Dark => super::DARK.to_owned(),
             ThemeType::Custom((_, theme)) => theme.clone(),
+        };
+        let (style, font_definitions) = t.export_theme().extract();
+        ctx.set_style(style);
+        ctx.set_fonts(font_definitions);
+        t
+    }
+}
+
+impl Debug for ThemeType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Light => write!(f, "Light"),
+            Self::Dark => write!(f, "Dark"),
+            Self::Custom((name, _)) => f.debug_tuple("Custom").field(name).finish(),
         }
     }
 }
@@ -48,18 +65,14 @@ impl Serialize for ThemeType {
     {
         match self {
             ThemeType::Light => serializer.serialize_str("light"),
-            ThemeType::Dark => serializer.serialize_str("light"),
+            ThemeType::Dark => serializer.serialize_str("dark"),
             ThemeType::Custom((name, theme)) => {
                 let theme_name = name.to_lowercase().replace(' ', "_");
                 let mut theme_file =
-                    app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, APP_FOLDER)
-                        .unwrap();
+                    app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, "").unwrap();
                 theme_file.push("themes");
                 fs::create_dir_all(&theme_file).unwrap();
-                theme_file.push(&format!("{theme_name}.theme.toml"));
-
-                let content = toml::to_string(&theme).unwrap();
-                fs::write(&theme_file, content).unwrap();
+                theme_file.push(&format!("{theme_name}"));
                 serializer.serialize_str(theme_file.to_str().unwrap())
             }
         }
