@@ -5,7 +5,7 @@ use crate::data::theme::ThemeType;
 #[derive(Parser, Clone)]
 #[clap(author, version, about)]
 pub struct OpenMCArgs {
-    #[clap(short, long, env = "OPENMC_THEME", default_value = "light")]
+    #[clap(short, long, env = "OPENMC_THEME")]
     pub theme: Option<ThemeType>,
     #[clap(long, default_value = "false")]
     pub no_gui: bool,

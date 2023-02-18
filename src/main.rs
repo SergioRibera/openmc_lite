@@ -28,7 +28,6 @@ fn main() -> Result<(), eframe::Error> {
         initial_window_size: Some(eframe::egui::vec2(1080., 720.)),
         min_window_size: Some(eframe::egui::vec2(1080., 720.)),
         centered: true,
-        default_theme: eframe::Theme::Light,
         ..Default::default()
     };
 

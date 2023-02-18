@@ -58,7 +58,9 @@ impl LauncherSettings {
             }
         }
 
-        cfg.theme = opts.theme.unwrap_or(ThemeType::Light);
+        if let Some(t) = opts.theme {
+            cfg.theme = t;
+        }
 
         cfg
     }
