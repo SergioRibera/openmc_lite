@@ -16,8 +16,8 @@ mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", bra
 eframe = "0.21.3"
 egui = { version = "0.21", features = ["serde"]}
 egui_extras = { version = "0.21.0", features = ["svg", "image"] }
-egui-stylist = { git = "https://github.com/SergioRibera/egui-stylist", rev = "8f208aa" }
-egui-theme = { git = "https://github.com/SergioRibera/egui-stylist", rev = "8f208aa" }
+egui-stylist = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
+egui-theme = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
 image = { version = "0.24", default-features = false, features = [
     "png",
     "jpeg",
@@ -50,3 +50,4 @@ clap = { version = "4.1.4", features = [
     "color",
     "suggestions",
 ] }
+rfd = "0.11.1"
