@@ -5,7 +5,8 @@ use egui_stylist::StylistState;
 use resources::ResourceLoader;
 use screens::tab_buttons;
 use screens::ViewType;
-use settings::{LauncherInstance, LauncherSettings};
+use settings::LauncherSettings;
+use widgets::open_file_dialog;
 use widgets::{AppComponent, TitleBar};
 
 mod args;
@@ -16,6 +17,9 @@ mod settings;
 mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
+    env_logger::Builder::from_env(env_logger::Env::new().filter_or("OPENMC_LOG", "warn"))
+        .format_timestamp(None)
+        .init();
     let options = eframe::NativeOptions {
         decorated: false,
         initial_window_size: Some(eframe::egui::vec2(1080., 720.)),
@@ -41,33 +45,12 @@ pub struct MainApplication {
     // windows_state: WindowEvent,
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
-// pub enum WindowEvent {
-//     Normal,
-//     Minimize,
-//     Maximize,
-//     Close,
-// }
-//
-// #[derive(Debug, Clone)]
-// pub enum MainMessage {
-//     None,
-//     ThemeChanged(ThemeType),
-//     ViewChanged(ViewType),
-//     WindowEvent(WindowEvent),
-//
-//     InstanceView(InstanceEvent),
-//
-//     LauncherInstanceChanged(LauncherInstance),
-// }
-
 impl MainApplication {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let launcher_config = LauncherSettings::new();
-        let theme = launcher_config.theme.apply();
-        let (style, font_definitions) = theme.export_theme().extract();
-        cc.egui_ctx.set_style(style);
-        cc.egui_ctx.set_fonts(font_definitions);
+        let mut launcher_config = LauncherSettings::new();
+        let mut theme = launcher_config.theme.apply(&cc.egui_ctx);
+        theme.set_file_dialog_function(Box::new(open_file_dialog));
+        log::debug!("Theme Loaded {:?}", launcher_config.theme);
 
         Self {
             launcher_config: launcher_config.clone(),
@@ -79,7 +62,6 @@ impl MainApplication {
             } else {
                 ViewType::Home
             },
-            // windows_state: WindowEvent::Normal,
         }
     }
 }
@@ -96,7 +78,9 @@ impl eframe::App for MainApplication {
                     match self.curr_view {
                         ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
                         ViewType::Instances => screens::instances(ui, &self.launcher_config),
-                        ViewType::Preferences => screens::preferences(ui, &mut self.theme, &self.launcher_config),
+                        ViewType::Preferences => {
+                            screens::preferences(ui, &mut self.theme, &mut self.launcher_config)
+                        }
                         _ => (),
                     }
                 } else {
