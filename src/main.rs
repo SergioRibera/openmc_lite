@@ -2,12 +2,15 @@
 
 use data::APP_NAME;
 use egui_stylist::StylistState;
+use egui_toast::Toasts;
 use resources::ResourceLoader;
 use screens::tab_buttons;
 use screens::ViewType;
 use settings::LauncherSettings;
 use widgets::open_file_dialog;
 use widgets::{AppComponent, TitleBar};
+
+use crate::widgets::create_toast;
 
 mod args;
 mod data;
@@ -42,12 +45,12 @@ pub struct MainApplication {
     theme: StylistState,
     curr_view: ViewType,
     curr_step: Option<u8>,
-    // windows_state: WindowEvent,
+    toasts: Toasts,
 }
 
 impl MainApplication {
     fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        let mut launcher_config = LauncherSettings::new();
+        let launcher_config = LauncherSettings::new();
         let mut theme = launcher_config.theme.apply(&cc.egui_ctx);
         theme.set_file_dialog_function(Box::new(open_file_dialog));
         log::debug!("Theme Loaded {:?}", launcher_config.theme);
@@ -57,6 +60,7 @@ impl MainApplication {
             curr_step: None,
             theme,
             resources: ResourceLoader::new(&cc.egui_ctx),
+            toasts: create_toast(),
             curr_view: if launcher_config.instances.is_empty() {
                 ViewType::Instances
             } else {
@@ -77,7 +81,9 @@ impl eframe::App for MainApplication {
                     ui.add_space(10.);
                     match self.curr_view {
                         ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
-                        ViewType::Instances => screens::instances(ui, &self.launcher_config),
+                        ViewType::Instances => {
+                            screens::instances(ui, &self.launcher_config)
+                        }
                         ViewType::Preferences => {
                             screens::preferences(ui, &mut self.theme, &mut self.launcher_config)
                         }
@@ -86,6 +92,8 @@ impl eframe::App for MainApplication {
                 } else {
                 }
             });
+            // Toasts/Notification Area
+            self.toasts.show(ctx);
         });
     }
 }
