@@ -2,10 +2,16 @@
 mod title_bar;
 mod icon_button;
 
+use std::path::PathBuf;
+
 use eframe::{egui::Ui, Frame};
+use egui_stylist::StylistFileDialog;
+use log::debug;
 // pub use notifications::*;
 pub use title_bar::*;
 pub use icon_button::IconButton;
+
+use crate::data::APP_INFO;
 
 pub trait AppComponent {
     type Context;
@@ -16,3 +22,29 @@ pub trait AppComponent {
     #[allow(unused)]
     fn with_frame(ctx: &mut Self::Context, ui: &mut Ui, frame: &mut Frame) {}
 }
+
+pub fn open_file_dialog(kind: StylistFileDialog, filter: Option<(&str, &[&str])>) -> Option<PathBuf> {
+    // Option a popup to save the file to a given directory
+    let mut theme_folder =
+        app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, "").unwrap();
+    theme_folder.push("themes");
+
+    debug!("Open File Dialog Directory Path: {theme_folder:?}");
+    match kind {
+        StylistFileDialog::Open => {
+            let mut builder = rfd::FileDialog::new();
+            if let Some(filter) = filter {
+                builder = builder.add_filter(filter.0, filter.1)
+            }
+            builder.set_directory(&theme_folder).pick_file()
+        }
+        StylistFileDialog::Save => {
+            let mut builder = rfd::FileDialog::new();
+            if let Some(filter) = filter {
+                builder = builder.add_filter(filter.0, filter.1)
+            }
+            builder.set_directory(&theme_folder).save_file()
+        }
+    }
+}
+
