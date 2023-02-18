@@ -1,7 +1,9 @@
 use crate::{
-    args::{OpenMCArgs, OpenMCommands}, data::theme::ThemeType,
+    args::{OpenMCArgs, OpenMCommands},
+    data::theme::ThemeType,
 };
 use clap::Parser;
+use log::{debug, trace};
 use serde::{Deserialize, Serialize};
 
 mod load;
@@ -62,7 +64,10 @@ impl LauncherSettings {
     }
 
     pub fn save(&self) -> bool {
-        save_settings::<Self>(self.clone(), "launcher.conf")
+        trace!("Save Setting");
+        let b = save_settings::<Self>(self.clone(), "launcher.conf");
+        debug!("Settings Saved: {b}");
+        b
     }
 }
 
