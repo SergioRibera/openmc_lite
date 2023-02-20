@@ -19,12 +19,18 @@ impl AppComponent for TitleBar {
             rect
         };
         let icons = &ctx.resources.icons;
-        title_bar_ui(ui, frame, title_bar_rect, icons);
+        let title = if !ctx.sub_title.is_empty() {
+            format!("{APP_NAME} - {}", ctx.sub_title)
+        } else {
+            APP_NAME.to_string()
+        };
+        title_bar_ui(ui, title, frame, title_bar_rect, icons);
     }
 }
 
 fn title_bar_ui(
     ui: &mut egui::Ui,
+    title_bar_str: String,
     frame: &mut eframe::Frame,
     title_bar_rect: eframe::epaint::Rect,
     icons: &Icons,
@@ -43,7 +49,7 @@ fn title_bar_ui(
     painter.text(
         title_bar_rect.center(),
         Align2::CENTER_CENTER,
-        APP_NAME,
+        title_bar_str,
         FontId::proportional(20.0),
         ui.style().visuals.text_color(),
     );
