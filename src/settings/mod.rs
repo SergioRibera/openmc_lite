@@ -1,6 +1,6 @@
 use crate::{
     args::{OpenMCArgs, OpenMCommands},
-    data::theme::ThemeType,
+    data::{theme::ThemeType, config_path},
 };
 use clap::Parser;
 use log::{debug, trace};
@@ -18,6 +18,8 @@ pub struct LauncherSettings {
     pub(crate) theme: ThemeType,
     pub(crate) last_launched: Option<LauncherInstance>,
     pub(crate) instances: Vec<LauncherInstance>,
+    #[serde(skip)]
+    pub exists_icons: bool,
 }
 
 // Data of instance
@@ -57,6 +59,10 @@ impl LauncherSettings {
                 }
             }
         }
+
+        let mut p = config_path("icons");
+        p.push("icons.zip");
+        cfg.exists_icons = p.exists();
 
         if let Some(t) = opts.theme {
             cfg.theme = t;

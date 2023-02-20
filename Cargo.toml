@@ -10,7 +10,7 @@ lto = true
 
 [dependencies]
 # Minecraft
-mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", branch = "simple_refactor" }
+mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", branch = "simple_refactor"}
 
 # GUI
 eframe = "0.21.3"

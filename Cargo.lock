@@ -1545,9 +1545,9 @@ dependencies = [
 
 [[package]]
 name = "http"
-version = "0.2.8"
+version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75f43d41e26995c17e71ee126451dd3941010b0514a81a9d11f3b341debc2399"
+checksum = "bd6effc99afb63425aff9b05836f029929e345a6148a14b7ecd5ab67af944482"
 dependencies = [
  "bytes",
  "fnv",
@@ -1848,7 +1848,7 @@ dependencies = [
 [[package]]
 name = "mc_downloader"
 version = "0.1.0"
-source = "git+https://github.com/SergioRibera/openmc_downloader?branch=simple_refactor#50afc7df6136de83114c96c301f8b1c4823fa9f8"
+source = "git+https://github.com/SergioRibera/openmc_downloader?branch=simple_refactor#3c3ae625db6e6b1d3dfb19368d3c1f1bfd44d894"
 dependencies = [
  "async-trait",
  "digest 0.10.6",
@@ -3099,9 +3099,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-native-tls"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7d995660bd2b7f8c1568414c1126076c13fbb725c40112dc0120b78eb9b717b"
+checksum = "bbae76ab933c85776efabc971569dd6119c580d8f5d448769dec1764bf796ef2"
 dependencies = [
  "native-tls",
  "tokio",
@@ -3109,9 +3109,9 @@ dependencies = [
 
 [[package]]
 name = "tokio-util"
-version = "0.7.4"
+version = "0.7.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bb2e075f03b3d66d8d8785356224ba688d2906a371015e225beeb65ca92c740"
+checksum = "5427d89453009325de0d8f342c9490009f76e999cb7672d77e46267448f7e6b2"
 dependencies = [
  "bytes",
  "futures-core",
