@@ -18,9 +18,9 @@ pub struct ResourceLoader {
 }
 
 impl ResourceLoader {
-    pub fn new(alloc: &Context) -> Self {
+    pub fn new() -> Self {
         ResourceLoader {
-            icons: Icons::preload(alloc).unwrap(),
+            icons: Icons::preload().unwrap(),
             home_bg: RetainedImage::from_image_bytes(
                 "home_background",
                 include_bytes!("../../assets/bg.jpg"),
