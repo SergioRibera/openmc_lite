@@ -1,9 +1,13 @@
-use egui::{Color32, FontId, Layout, RichText, Stroke};
+use egui::{Color32, FontId, Layout, RichText, Sense, Stroke, Ui};
 use egui_extras::Size;
+use log::info;
 
 use crate::{
+    data::config_path,
+    resources::icon::Icon,
     settings::{LauncherInstance, MinecraftVersion},
-    MainApplication,
+    widgets::{GridWrapped, IconButton},
+    MainApplication, MainState,
 };
 
 type StepCallback = fn(&mut CreateInstance, &mut egui::Ui);
@@ -14,29 +18,48 @@ static STEPS: &[(&str, StepCallback)] = &[
     ("Version", set_version),
 ];
 
-#[derive(Clone)]
 pub struct CreateInstance {
     curr_step: u8,
     max_step: u8,
     name: String,
+    icons: Vec<Icon>,
+    grid: GridWrapped,
     path: String,
-    icon_path: String,
+    icon_selected: usize,
     version: Option<MinecraftVersion>,
 }
 
 impl CreateInstance {
     pub fn new() -> Self {
+        let path_icons = config_path("icons");
+
+        let icons = path_icons
+            .read_dir()
+            .unwrap()
+            .flat_map(|f| f)
+            .filter(|f| f.file_name().to_str().unwrap().ends_with(".png"))
+            .flat_map(|f| {
+                Icon::image_from_path(
+                    f.file_name().to_str().unwrap(),
+                    f.path().to_str().unwrap(),
+                    egui_extras::image::FitTo::Size(80, 80),
+                )
+            })
+            .collect();
+
         Self {
+            icons,
             curr_step: 0,
             max_step: STEPS.len() as u8 - 1,
+            grid: GridWrapped::default(),
             name: String::new(),
             path: String::new(),
-            icon_path: String::new(),
+            icon_selected: 0,
             version: None,
         }
     }
 
-    pub fn show(&mut self, ui: &mut egui::Ui, state: &mut MainApplication) {
+    pub fn show(&mut self, ui: &mut egui::Ui, state: &mut MainState) {
         ui.add_space(20.);
         egui_extras::StripBuilder::new(ui)
             .size(Size::relative(0.1)) // Progress
@@ -135,31 +158,28 @@ fn set_name(data: &mut CreateInstance, ui: &mut egui::Ui) {
     });
 }
 
-fn set_icon(_data: &mut CreateInstance, ui: &mut egui::Ui) {
+fn set_icon(data: &mut CreateInstance, ui: &mut egui::Ui) {
     ui.vertical_centered(|ui| {
         // Icon
         create_label(ui, "Choose an icon that characterizes your instance");
         ui.add_space(20.);
-        ui.horizontal_centered(|ui| {
-            egui::ScrollArea::vertical()
-                .min_scrolled_width(ui.available_width())
-                .min_scrolled_height(ui.available_height())
-                .show(ui, |ui| {
-                    egui::Grid::new("icons")
-                        .num_columns(4)
-                        .striped(true)
-                        .spacing((10., 10.))
-                        .min_col_width(100.)
-                        .min_row_height(100.)
-                        .show(ui, |ui| {
-                            let _add_btn = ui.add(
-                                eframe::egui::Button::new(RichText::new("Custom").size(20.))
-                                    .wrap(true)
-                                    .min_size(ui.available_size()),
-                            );
-                        });
+        data.grid.show(
+            ui,
+            "Other",
+            (100., 100.),
+            data.icons.len(),
+            |ui, i| {
+                ui.centered_and_justified(|ui| {
+                    ui.image(data.icons[i].id(ui.ctx()), (50., 50.));
                 });
-        });
+            },
+            || {
+                info!("Other clicked");
+            },
+            |selected: usize| {
+                info!("Icon '{selected}' is clicked");
+            },
+        )
     });
 }
 
