@@ -1,3 +1,4 @@
+mod grid_wrapped;
 mod icon_button;
 mod title_bar;
 mod toast;
@@ -8,6 +9,7 @@ use egui_stylist::StylistFileDialog;
 use log::debug;
 use std::path::PathBuf;
 
+pub use grid_wrapped::*;
 pub use icon_button::IconButton;
 pub use title_bar::*;
 pub use toast::*;
