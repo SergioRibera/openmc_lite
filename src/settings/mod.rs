@@ -1,6 +1,6 @@
 use crate::{
     args::{OpenMCArgs, OpenMCommands},
-    data::{theme::ThemeType, config_path},
+    data::{config_path, theme::ThemeType},
 };
 use clap::Parser;
 use log::{debug, trace};
@@ -60,9 +60,8 @@ impl LauncherSettings {
             }
         }
 
-        let mut p = config_path("icons");
-        p.push("icons.zip");
-        cfg.exists_icons = p.exists();
+        let p = config_path("icons");
+        cfg.exists_icons = p.is_dir() && p.read_dir().unwrap().count() > 1;
 
         if let Some(t) = opts.theme {
             cfg.theme = t;
