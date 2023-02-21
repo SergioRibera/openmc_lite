@@ -2,10 +2,11 @@ mod create;
 
 pub use create::*;
 
-use crate::MainApplication;
 use eframe::egui::{Grid, RichText, Ui};
 
-pub fn instances(ui: &mut Ui, state: &mut MainApplication) {
+use crate::{MainState, settings::LauncherSettings};
+
+pub fn instances(ui: &mut Ui, cfg: &LauncherSettings, state: &mut MainState) {
     Grid::new("Instances")
         .num_columns(4)
         .striped(true)
@@ -21,7 +22,7 @@ pub fn instances(ui: &mut Ui, state: &mut MainApplication) {
             if add_btn.clicked() {
                 state.create_instance = true;
             }
-            state.launcher_config.instances.iter().for_each(|i| {
+            cfg.instances.iter().for_each(|i| {
                 ui.label(RichText::new(i.name.clone()).size(text_size));
             });
         });
