@@ -2,7 +2,7 @@ mod theme_type;
 
 use egui::Context;
 use egui_stylist::{StylistFileDialog, StylistState};
-use log::{trace, debug};
+use log::{debug, trace};
 use once_cell::sync::Lazy;
 pub use theme_type::*;
 

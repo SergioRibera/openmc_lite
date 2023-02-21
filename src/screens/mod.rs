@@ -4,9 +4,9 @@ mod home;
 mod instances;
 mod preferences;
 
+pub use self::preferences::*;
 pub use home::*;
 pub use instances::*;
-pub use self::preferences::*;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ViewType {

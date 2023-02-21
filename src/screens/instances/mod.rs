@@ -4,7 +4,7 @@ pub use create::*;
 
 use eframe::egui::{Grid, RichText, Ui};
 
-use crate::{MainState, settings::LauncherSettings};
+use crate::{settings::LauncherSettings, MainState};
 
 pub fn instances(ui: &mut Ui, cfg: &LauncherSettings, state: &mut MainState) {
     Grid::new("Instances")
