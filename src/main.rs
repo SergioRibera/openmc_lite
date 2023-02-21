@@ -9,7 +9,7 @@ use screens::CreateInstance;
 use screens::ViewType;
 use settings::LauncherSettings;
 use widgets::open_file_dialog;
-use widgets::{AppComponent, TitleBar};
+use widgets::TitleBar;
 
 use mc_downloader::prelude::{ClientDownloader, DownloaderService};
 
@@ -47,14 +47,19 @@ pub struct MainApplication {
     launcher_config: LauncherSettings,
     resources: ResourceLoader,
     theme: StylistState,
-    titlebar: Option<TitleBar>,
-    sub_title: String,
+    titlebar: TitleBar,
     curr_view: ViewType,
-    create_instance: bool,
     create_widget: CreateInstance,
-    mc_downloader: ClientDownloader,
+    mc_downloader: Option<ClientDownloader>,
     downloader: Option<DownloaderService>,
+    state: MainState,
     toasts: Toasts,
+}
+
+#[derive(Default)]
+pub struct MainState {
+    pub sub_title: String,
+    pub create_instance: bool,
 }
 
 impl MainApplication {
@@ -67,13 +72,13 @@ impl MainApplication {
         Self {
             launcher_config: launcher_config.clone(),
             theme,
-            titlebar: None,
-            sub_title: String::new(),
+            state: MainState::default(),
             resources: ResourceLoader::new(),
             toasts: create_toast(),
-            create_instance: false,
             create_widget: CreateInstance::new(),
-            mc_downloader: ClientDownloader::new().unwrap(),
+            titlebar: TitleBar::new(),
+            // mc_downloader: ClientDownloader::new().unwrap(),
+            mc_downloader: None,
             downloader: if !launcher_config.exists_icons {
                 Some(create_icons_svc())
             } else {
@@ -92,29 +97,30 @@ impl eframe::App for MainApplication {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
             ui.vertical(|ui| {
-                let titlebar = self.titlebar.as_mut();
-                if let Some(titlebar) = titlebar {
-                    titlebar.draw_title_bar_ui(&mut self.downloader, ui, frame);
-                } else {
-                    self.titlebar = Some(TitleBar::new(self, ui.max_rect()));
-                }
+                self.titlebar.draw_title_bar_ui(
+                    ui,
+                    frame,
+                    self.state.sub_title.clone(),
+                    ui.max_rect(),
+                    &mut self.downloader,
+                );
                 ui.add_space(20.);
-                if !self.create_instance {
+                if !self.state.create_instance {
                     tab_buttons(ui, &mut self.curr_view);
                     ui.add_space(10.);
                     match self.curr_view {
                         ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
-                        ViewType::Instances => screens::instances(ui, self),
+                        ViewType::Instances => {
+                            screens::instances(ui, &self.launcher_config, &mut self.state)
+                        }
                         ViewType::Preferences => {
                             screens::preferences(ui, &mut self.theme, &mut self.launcher_config)
                         }
                         _ => (),
                     }
                 } else {
-                    self.sub_title = "Create Instance".to_string();
-                    let mut w = self.create_widget.clone();
-                    w.show(ui, self);
-                    self.create_widget = w;
+                    self.state.sub_title = "Create Instance".to_string();
+                    self.create_widget.show(ui, &mut self.state);
                 }
             });
             // Toasts/Notification Area
