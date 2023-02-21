@@ -1,29 +1,19 @@
 use std::sync::{mpsc::Receiver, Arc, Mutex};
 
 use eframe::egui;
-use egui::Rect;
 use log::{debug, info};
 use mc_downloader::prelude::DownloaderService;
 
 use crate::{
     data::APP_NAME,
     download_svc::{DownloadProgress, DownloadProgressMessage},
-    resources::icon::Icon,
-    MainApplication,
+    resources::ResourceLoader,
 };
 
 use super::IconButton;
 
 pub struct TitleBar {
-    icon_app: Icon,
-    icon_expand: Icon,
-    icon_close: Icon,
-    icon_restore: Icon,
-    icon_maximize: Icon,
-    icon_minimize: Icon,
-    title_bar_str: String,
-    title_bar_rect: eframe::epaint::Rect,
-    progressbar_rect: eframe::epaint::Rect,
+    resources: ResourceLoader,
     start_download: bool,
     curr_progress: f32,
     progress: DownloadProgress,
@@ -31,7 +21,29 @@ pub struct TitleBar {
 }
 
 impl TitleBar {
-    pub fn new(ctx: &mut MainApplication, app_rect: Rect) -> Self {
+    // pub fn new(ctx: &mut MainApplication) -> Self {
+    pub fn new() -> Self {
+        let (progress, progress_rcv) = DownloadProgress::new();
+
+        Self {
+            progress,
+            progress_rcv,
+            curr_progress: 0.,
+            start_download: false,
+            resources: ResourceLoader::new(),
+        }
+    }
+
+    pub fn draw_title_bar_ui(
+        &mut self,
+        ui: &mut egui::Ui,
+        frame: &mut eframe::Frame,
+        subtitle: String,
+        app_rect: egui::Rect,
+        downloader: &mut Option<DownloaderService>,
+    ) {
+        use egui::*;
+
         let title_bar_height = 32.0;
         let pb_height = 3.;
         let title_bar_rect = {
@@ -43,52 +55,25 @@ impl TitleBar {
         let mut pb_rect = title_bar_rect.clone();
         pb_rect.min.y = pb_rect.max.y + 5.;
         pb_rect.max.y = pb_rect.max.y + pb_height;
-        let title = if !ctx.sub_title.is_empty() {
-            format!("{APP_NAME} - {}", ctx.sub_title)
+        let title = if !subtitle.is_empty() {
+            format!("{APP_NAME} - {}", subtitle)
         } else {
             APP_NAME.to_string()
         };
 
-        let (progress, progress_rcv) = DownloadProgress::new();
-
-        Self {
-            title_bar_rect,
-            title_bar_str: title,
-            progressbar_rect: pb_rect,
-            start_download: false,
-            progress,
-            progress_rcv,
-            curr_progress: 0.,
-            icon_close: ctx.resources.icons.close.clone(),
-            icon_app: ctx.resources.icons.app.clone(),
-            icon_expand: ctx.resources.icons.expand_arrow.clone(),
-            icon_restore: ctx.resources.icons.restore.clone(),
-            icon_maximize: ctx.resources.icons.maximize.clone(),
-            icon_minimize: ctx.resources.icons.minimize.clone(),
-        }
-    }
-
-    pub fn draw_title_bar_ui(
-        &mut self,
-        downloader: &mut Option<DownloaderService>,
-        ui: &mut egui::Ui,
-        frame: &mut eframe::Frame,
-    ) {
-        use egui::*;
-
         let painter = ui.painter();
 
         let title_bar_response = ui.interact(
-            self.title_bar_rect,
+            title_bar_rect,
             Id::new("title_bar"),
             Sense::click_and_drag(),
         );
 
         // Paint the title:
         painter.text(
-            self.title_bar_rect.center(),
+            title_bar_rect.center(),
             Align2::CENTER_CENTER,
-            self.title_bar_str.clone(),
+            title,
             FontId::proportional(20.0),
             ui.style().visuals.text_color(),
         );
@@ -101,14 +86,14 @@ impl TitleBar {
         }
 
         // User Profile
-        ui.allocate_ui_at_rect(self.title_bar_rect, |ui| {
+        ui.allocate_ui_at_rect(title_bar_rect, |ui| {
             ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                ui.image(self.icon_app.id(ui.ctx()), (32., 32.));
+                ui.image(self.resources.icons.app.id(ui.ctx()), (32., 32.));
                 ui.vertical(|ui| {
                     ui.label("Sergio Ribera");
                     ui.label("OFFLINE");
                 });
-                ui.image(self.icon_expand.id(ui.ctx()), (10., 10.));
+                ui.image(self.resources.icons.expand_arrow.id(ui.ctx()), (10., 10.));
                 ui.interact_with_hovered(
                     ui.max_rect(),
                     true,
@@ -119,14 +104,14 @@ impl TitleBar {
         });
 
         // Windows Controlls
-        ui.allocate_ui_at_rect(self.title_bar_rect, |ui| {
+        ui.allocate_ui_at_rect(title_bar_rect, |ui| {
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 ui.spacing_mut().item_spacing.x = 8.0;
                 ui.visuals_mut().button_frame = false;
                 ui.add_space(8.0);
 
                 let close_btn = ui
-                    .add(IconButton::new(&self.icon_close))
+                    .add(IconButton::new(&self.resources.icons.close))
                     .on_hover_text("Close Window");
                 if close_btn.clicked() {
                     frame.close();
@@ -134,14 +119,14 @@ impl TitleBar {
                 if !frame.is_web() {
                     if frame.info().window_info.maximized {
                         let maximized_response = ui
-                            .add(IconButton::new(&self.icon_restore))
+                            .add(IconButton::new(&self.resources.icons.restore))
                             .on_hover_text("Restore window");
                         if maximized_response.clicked() {
                             frame.set_maximized(false);
                         }
                     } else {
                         let maximized_response = ui
-                            .add(IconButton::new(&self.icon_maximize))
+                            .add(IconButton::new(&self.resources.icons.maximize))
                             .on_hover_text("Maximize window");
                         if maximized_response.clicked() {
                             frame.set_maximized(true);
@@ -149,7 +134,7 @@ impl TitleBar {
                     }
 
                     let minimized_response = ui
-                        .add(IconButton::new(&self.icon_minimize))
+                        .add(IconButton::new(&self.resources.icons.minimize))
                         .on_hover_text("Minimize the window");
                     if minimized_response.clicked() {
                         frame.set_minimized(true);
@@ -179,7 +164,7 @@ impl TitleBar {
                     }
                     _ => {}
                 }
-                ui.allocate_ui_at_rect(self.progressbar_rect, |ui| {
+                ui.allocate_ui_at_rect(pb_rect, |ui| {
                     debug!("Painting Download Progress {}", self.curr_progress);
                     let painter = ui.painter();
                     let rect = ui.max_rect();
