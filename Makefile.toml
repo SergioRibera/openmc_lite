@@ -27,7 +27,7 @@ args = ["fmt", "--all", "--", "--check"]
 [tasks.fix-fmt]
 description = "Fix format"
 command = "cargo"
-args = ["fmt", "--all", "--", "--write-mode=overwrite"]
+args = ["fmt", "--all"]
 
 [tasks.clippy]
 description = "Check code quality"
