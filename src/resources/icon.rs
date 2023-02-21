@@ -9,7 +9,6 @@ pub struct Icon {
     pub texture: egui_extras::RetainedImage,
     pub size: FitTo,
     pub name: String,
-    is_svg: bool,
 }
 
 impl Icon {
@@ -17,7 +16,6 @@ impl Icon {
         let bytes = std::fs::read(format!("./assets/icons/{name}"))?;
         Ok(Self {
             size,
-            is_svg: true,
             name: name.to_string(),
             texture: egui_extras::RetainedImage::from_svg_bytes_with_size(name, &bytes, size)
                 .unwrap(),
@@ -28,7 +26,6 @@ impl Icon {
         let bytes = std::fs::read(format!("./assets/{name}"))?;
         Ok(Self {
             size,
-            is_svg: false,
             name: name.to_string(),
             texture: egui_extras::RetainedImage::from_image_bytes(name, &bytes).unwrap(),
         })
@@ -38,7 +35,6 @@ impl Icon {
         let bytes = std::fs::read(path)?;
         Ok(Self {
             size,
-            is_svg: true,
             name: name.to_string(),
             texture: egui_extras::RetainedImage::from_svg_bytes_with_size(name, &bytes, size)
                 .unwrap(),
@@ -49,7 +45,6 @@ impl Icon {
         let bytes = std::fs::read(path)?;
         Ok(Self {
             size,
-            is_svg: false,
             name: name.to_string(),
             texture: egui_extras::RetainedImage::from_image_bytes(name, &bytes).unwrap(),
         })

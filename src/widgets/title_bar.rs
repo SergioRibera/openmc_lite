@@ -8,6 +8,8 @@ use crate::{
     data::APP_NAME,
     download_svc::{DownloadProgress, DownloadProgressMessage},
     resources::ResourceLoader,
+    widgets::add_toast,
+    MainState,
 };
 
 use super::IconButton;
@@ -20,9 +22,8 @@ pub struct TitleBar {
     progress_rcv: Receiver<DownloadProgressMessage>,
 }
 
-impl TitleBar {
-    // pub fn new(ctx: &mut MainApplication) -> Self {
-    pub fn new() -> Self {
+impl Default for TitleBar {
+    fn default() -> Self {
         let (progress, progress_rcv) = DownloadProgress::new();
 
         Self {
@@ -30,16 +31,18 @@ impl TitleBar {
             progress_rcv,
             curr_progress: 0.,
             start_download: false,
-            resources: ResourceLoader::new(),
+            resources: ResourceLoader::default(),
         }
     }
+}
 
+impl TitleBar {
     pub fn draw_title_bar_ui(
         &mut self,
         ui: &mut egui::Ui,
         frame: &mut eframe::Frame,
-        subtitle: String,
         app_rect: egui::Rect,
+        state: &mut MainState,
         downloader: &mut Option<DownloaderService>,
     ) {
         use egui::*;
@@ -52,11 +55,11 @@ impl TitleBar {
             rect
         };
 
-        let mut pb_rect = title_bar_rect.clone();
+        let mut pb_rect = title_bar_rect;
         pb_rect.min.y = pb_rect.max.y + 5.;
-        pb_rect.max.y = pb_rect.max.y + pb_height;
-        let title = if !subtitle.is_empty() {
-            format!("{APP_NAME} - {}", subtitle)
+        pb_rect.max.y += pb_height;
+        let title = if !state.sub_title.is_empty() {
+            format!("{APP_NAME} - {}", state.sub_title)
         } else {
             APP_NAME.to_string()
         };
@@ -157,12 +160,17 @@ impl TitleBar {
         if self.start_download {
             while let Ok(msg) = self.progress_rcv.try_recv() {
                 match msg {
+                    DownloadProgressMessage::Setup(_) => add_toast(
+                        &mut state.toasts,
+                        "Extra Assets",
+                        "Downloading extra assets for launcher, ex: icons, sounds, etc",
+                        crate::widgets::OpenMCToastKind::Info,
+                    ),
                     DownloadProgressMessage::Update(curr, _max) => self.curr_progress = curr as f32,
                     DownloadProgressMessage::End => {
                         *downloader = None;
                         self.start_download = false;
                     }
-                    _ => {}
                 }
                 ui.allocate_ui_at_rect(pb_rect, |ui| {
                     debug!("Painting Download Progress {}", self.curr_progress);
@@ -170,7 +178,7 @@ impl TitleBar {
                     let rect = ui.max_rect();
                     let pos = rect.left_center();
                     let max_width = rect.right_center().x;
-                    let mut to = pos.clone();
+                    let mut to = pos;
                     to.x += (self.curr_progress / 1394096.) * max_width;
                     painter.line_segment([pos, to], Stroke::new(1.5, Color32::LIGHT_BLUE));
                 });

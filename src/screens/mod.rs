@@ -8,7 +8,7 @@ pub use self::preferences::*;
 pub use home::*;
 pub use instances::*;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ViewType {
     Home,
     #[allow(unused)]

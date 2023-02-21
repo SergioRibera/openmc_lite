@@ -6,7 +6,7 @@ pub use icons::*;
 use log::info;
 use mc_downloader::prelude::Reporter;
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum DownloadProgressMessage {
     Setup(u64),
     Update(u64, u64),

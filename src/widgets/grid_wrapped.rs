@@ -6,6 +6,7 @@ pub struct GridWrapped {
 }
 
 impl GridWrapped {
+    #[allow(clippy::too_many_arguments)]
     pub fn show(
         &mut self,
         ui: &mut Ui,
@@ -16,13 +17,13 @@ impl GridWrapped {
         on_btn_click: impl FnOnce() + Copy,
         on_change: impl FnOnce(usize) + Copy,
     ) {
-        let size = cell_size.clone();
         egui::ScrollArea::vertical()
             .min_scrolled_width(ui.available_width())
             .min_scrolled_height(ui.available_height())
             .show(ui, |ui| {
                 ui.horizontal_wrapped(|ui| {
-                    let (rect, _resp) = ui.allocate_at_least(size.clone().into(), Sense::click());
+                    let (rect, _resp) =
+                        ui.allocate_at_least(cell_size.clone().into(), Sense::click());
 
                     ui.allocate_ui_at_rect(rect, |ui| {
                         let btn = ui.add(
@@ -33,15 +34,15 @@ impl GridWrapped {
                         if btn.clicked() {
                             on_btn_click();
                         }
-                        // ui.add_space(5.);
+                        ui.add_space(5.);
                     });
 
                     for i in 0..items {
                         let (rect, resp) =
-                            ui.allocate_at_least(size.clone().into(), Sense::click());
-                        let rect_margin = rect.clone();
-                        // rect_margin.max.x += 5.;
-                        // rect_margin.max.y += 5.;
+                            ui.allocate_at_least(cell_size.clone().into(), Sense::click());
+                        let mut rect_margin = rect;
+                        rect_margin.max.x += 5.;
+                        rect_margin.max.y += 5.;
 
                         ui.allocate_ui_at_rect(rect_margin, |ui| {
                             let color = if let Some(selected) = self.selected {

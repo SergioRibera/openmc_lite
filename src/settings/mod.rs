@@ -15,9 +15,9 @@ pub use save::save_settings;
 // Data to save and load into preferences
 #[derive(Default, Serialize, Deserialize, Clone)]
 pub struct LauncherSettings {
-    pub(crate) theme: ThemeType,
-    pub(crate) last_launched: Option<LauncherInstance>,
-    pub(crate) instances: Vec<LauncherInstance>,
+    pub theme: ThemeType,
+    pub last_launched: Option<LauncherInstance>,
+    pub instances: Vec<LauncherInstance>,
     #[serde(skip)]
     pub exists_icons: bool,
 }

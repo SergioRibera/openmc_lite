@@ -25,7 +25,7 @@ impl From<&str> for ThemeType {
             "dark" => ThemeType::Dark,
             path_str => {
                 let content = fs::read_to_string(path_str).unwrap();
-                let theme = toml::from_str::<StylistState>(&&content).unwrap();
+                let theme = toml::from_str::<StylistState>(&content).unwrap();
                 let theme_name = format!("{:?}", PathBuf::from(path_str).file_name().unwrap());
                 debug!("Reading theme from: {path_str}\nTheme Name: {theme_name}");
                 ThemeType::Custom((theme_name, theme))
@@ -72,7 +72,7 @@ impl Serialize for ThemeType {
                     app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, "").unwrap();
                 theme_file.push("themes");
                 fs::create_dir_all(&theme_file).unwrap();
-                theme_file.push(&format!("{theme_name}"));
+                theme_file.push(&theme_name);
                 serializer.serialize_str(theme_file.to_str().unwrap())
             }
         }

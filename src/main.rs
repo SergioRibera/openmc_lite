@@ -1,28 +1,15 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use data::APP_NAME;
+use download_svc::create_icons_svc;
 use egui_stylist::StylistState;
-use egui_toast::Toasts;
+use openmc_lite::{data, download_svc, resources, screens, settings, widgets, MainState};
 use resources::ResourceLoader;
-use screens::tab_buttons;
-use screens::CreateInstance;
-use screens::ViewType;
+use screens::{tab_buttons, CreateInstance, ViewType};
 use settings::LauncherSettings;
-use widgets::open_file_dialog;
-use widgets::TitleBar;
+use widgets::{open_file_dialog, TitleBar};
 
 use mc_downloader::prelude::{ClientDownloader, DownloaderService};
-
-use crate::download_svc::create_icons_svc;
-use crate::widgets::create_toast;
-
-mod args;
-mod data;
-mod download_svc;
-mod resources;
-mod screens;
-mod settings;
-mod widgets;
 
 fn main() -> Result<(), eframe::Error> {
     env_logger::Builder::from_env(env_logger::Env::new().filter_or("OPENMC_LOG", "warn"))
@@ -53,13 +40,6 @@ pub struct MainApplication {
     mc_downloader: Option<ClientDownloader>,
     downloader: Option<DownloaderService>,
     state: MainState,
-    toasts: Toasts,
-}
-
-#[derive(Default)]
-pub struct MainState {
-    pub sub_title: String,
-    pub create_instance: bool,
 }
 
 impl MainApplication {
@@ -73,10 +53,9 @@ impl MainApplication {
             launcher_config: launcher_config.clone(),
             theme,
             state: MainState::default(),
-            resources: ResourceLoader::new(),
-            toasts: create_toast(),
-            create_widget: CreateInstance::new(),
-            titlebar: TitleBar::new(),
+            resources: ResourceLoader::default(),
+            create_widget: CreateInstance::default(),
+            titlebar: TitleBar::default(),
             // mc_downloader: ClientDownloader::new().unwrap(),
             mc_downloader: None,
             downloader: if !launcher_config.exists_icons {
@@ -100,8 +79,8 @@ impl eframe::App for MainApplication {
                 self.titlebar.draw_title_bar_ui(
                     ui,
                     frame,
-                    self.state.sub_title.clone(),
                     ui.max_rect(),
+                    &mut self.state,
                     &mut self.downloader,
                 );
                 ui.add_space(20.);
@@ -124,7 +103,7 @@ impl eframe::App for MainApplication {
                 }
             });
             // Toasts/Notification Area
-            self.toasts.show(ctx);
+            self.state.toasts.show(ctx);
         });
     }
 }

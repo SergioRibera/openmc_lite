@@ -27,7 +27,7 @@ fn custom_info_toast(ui: &mut Ui, toast: &mut Toast) -> Response {
         .rounding(4.0)
         .show(ui, |ui| {
             if let [kind, title, desc] =
-                &toast.text.clone().text().split("|").collect::<Vec<&str>>()[..3]
+                &toast.text.clone().text().split('|').collect::<Vec<&str>>()[..3]
             {
                 ui.horizontal(|ui| {
                     let _kind = OpenMCToastKind::from(*kind);

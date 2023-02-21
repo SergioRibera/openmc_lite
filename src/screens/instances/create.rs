@@ -1,13 +1,10 @@
-use egui::{Color32, FontId, Layout, RichText, Sense, Stroke, Ui};
+use egui::{Color32, FontId, Layout, RichText, Stroke};
 use egui_extras::Size;
 use log::info;
 
 use crate::{
-    data::config_path,
-    resources::icon::Icon,
-    settings::{LauncherInstance, MinecraftVersion},
-    widgets::{GridWrapped, IconButton},
-    MainApplication, MainState,
+    data::config_path, resources::icon::Icon, settings::MinecraftVersion, widgets::GridWrapped,
+    MainState,
 };
 
 type StepCallback = fn(&mut CreateInstance, &mut egui::Ui);
@@ -29,14 +26,14 @@ pub struct CreateInstance {
     version: Option<MinecraftVersion>,
 }
 
-impl CreateInstance {
-    pub fn new() -> Self {
+impl Default for CreateInstance {
+    fn default() -> Self {
         let path_icons = config_path("icons");
 
         let icons = path_icons
             .read_dir()
             .unwrap()
-            .flat_map(|f| f)
+            .flatten()
             .filter(|f| f.file_name().to_str().unwrap().ends_with(".png"))
             .flat_map(|f| {
                 Icon::image_from_path(
@@ -58,7 +55,9 @@ impl CreateInstance {
             version: None,
         }
     }
+}
 
+impl CreateInstance {
     pub fn show(&mut self, ui: &mut egui::Ui, state: &mut MainState) {
         ui.add_space(20.);
         egui_extras::StripBuilder::new(ui)
@@ -104,7 +103,7 @@ impl CreateInstance {
                                                 + 10.;
                                         }
                                         if i < self.max_step {
-                                            let mut to = pos.clone();
+                                            let mut to = pos;
                                             to.x += 50.;
                                             painter.line_segment(
                                                 [pos, to],
@@ -119,7 +118,7 @@ impl CreateInstance {
                         });
                 });
                 strip.cell(|ui| {
-                    let i = self.curr_step.clone() as usize;
+                    let i = self.curr_step as usize;
                     STEPS[i].1(self, ui);
                 });
                 strip.cell(|ui| {
@@ -129,15 +128,11 @@ impl CreateInstance {
                                 state.sub_title = String::new();
                                 state.create_instance = false;
                             }
-                        } else {
-                            if ui.button("Next").clicked() {
-                                self.curr_step += 1;
-                            }
+                        } else if ui.button("Next").clicked() {
+                            self.curr_step += 1;
                         }
-                        if self.curr_step > 0 {
-                            if ui.button("Prev").clicked() {
-                                self.curr_step -= 1;
-                            }
+                        if self.curr_step > 0 && ui.button("Prev").clicked() {
+                            self.curr_step -= 1;
                         }
                     });
                 });

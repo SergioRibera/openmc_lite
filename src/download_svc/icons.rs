@@ -1,4 +1,4 @@
-use mc_downloader::prelude::{DownloadData, DownloaderService, Progress};
+use mc_downloader::prelude::{DownloadData, DownloaderService};
 
 use crate::data::config_path;
 
