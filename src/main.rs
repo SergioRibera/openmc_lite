@@ -98,7 +98,7 @@ impl eframe::App for MainApplication {
                         ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
                         ViewType::Instances => self.instances_widget.show(
                             ui,
-                            &self.launcher_config,
+                            &mut self.launcher_config,
                             &mut self.create_widget,
                             &mut self.state,
                         ),
