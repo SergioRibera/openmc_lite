@@ -2,6 +2,7 @@ mod grid_wrapped;
 mod icon_button;
 mod title_bar;
 mod toast;
+mod tabs;
 
 use crate::data::APP_INFO;
 use eframe::{egui::Ui, Frame};
@@ -12,6 +13,7 @@ use std::path::PathBuf;
 pub use grid_wrapped::*;
 pub use icon_button::IconButton;
 pub use title_bar::*;
+pub use tabs::*;
 pub use toast::*;
 
 pub trait AppComponent {
