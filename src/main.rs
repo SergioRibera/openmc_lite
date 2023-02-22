@@ -3,7 +3,11 @@
 use data::APP_NAME;
 use download_svc::create_icons_svc;
 use egui_stylist::StylistState;
-use openmc_lite::{data, download_svc, resources, screens, settings, widgets, MainState};
+use openmc_lite::{
+    data, download_svc, resources,
+    screens::{self, Instances},
+    settings, widgets, MainState,
+};
 use resources::ResourceLoader;
 use screens::{tab_buttons, CreateInstance, ViewType};
 use settings::LauncherSettings;
@@ -36,6 +40,7 @@ pub struct MainApplication {
     theme: StylistState,
     titlebar: TitleBar,
     curr_view: ViewType,
+    instances_widget: Instances,
     create_widget: CreateInstance,
     mc_downloader: Option<ClientDownloader>,
     downloader: Option<DownloaderService>,
@@ -49,15 +54,17 @@ impl MainApplication {
         theme.set_file_dialog_function(Box::new(open_file_dialog));
         log::debug!("Theme Loaded {:?}", launcher_config.theme);
 
+        let mc = ClientDownloader::new().unwrap();
+
         Self {
             launcher_config: launcher_config.clone(),
             theme,
             state: MainState::default(),
             resources: ResourceLoader::default(),
-            create_widget: CreateInstance::default(),
+            instances_widget: Instances::default(),
+            create_widget: CreateInstance::new(&mc),
             titlebar: TitleBar::default(),
-            // mc_downloader: ClientDownloader::new().unwrap(),
-            mc_downloader: None,
+            mc_downloader: Some(mc),
             downloader: if !launcher_config.exists_icons {
                 Some(create_icons_svc())
             } else {
@@ -89,9 +96,12 @@ impl eframe::App for MainApplication {
                     ui.add_space(10.);
                     match self.curr_view {
                         ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
-                        ViewType::Instances => {
-                            screens::instances(ui, &self.launcher_config, &mut self.state)
-                        }
+                        ViewType::Instances => self.instances_widget.show(
+                            ui,
+                            &self.launcher_config,
+                            &mut self.create_widget,
+                            &mut self.state,
+                        ),
                         ViewType::Preferences => {
                             screens::preferences(ui, &mut self.theme, &mut self.launcher_config)
                         }
@@ -99,11 +109,20 @@ impl eframe::App for MainApplication {
                     }
                 } else {
                     self.state.sub_title = "Create Instance".to_string();
-                    self.create_widget.show(ui, &mut self.state);
+                    self.create_widget.show(
+                        ui,
+                        &mut self.theme,
+                        &mut self.launcher_config,
+                        &mut self.state,
+                    );
                 }
             });
             // Toasts/Notification Area
             self.state.toasts.show(ctx);
         });
+    }
+
+    fn save(&mut self, _storage: &mut dyn eframe::Storage) {
+        self.launcher_config.save();
     }
 }
