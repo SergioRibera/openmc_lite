@@ -1,33 +1,44 @@
+use std::{cell::RefCell, path::PathBuf};
+
 use egui::{Color32, FontId, Layout, RichText, Stroke};
 use egui_extras::Size;
+use egui_stylist::StylistState;
 use log::info;
+use mc_downloader::prelude::ClientDownloader;
 
 use crate::{
-    data::config_path, resources::icon::Icon, settings::MinecraftVersion, widgets::GridWrapped,
+    data::config_path,
+    resources::icon::Icon,
+    settings::{LauncherSettings, MinecraftVersion},
+    widgets::{add_toast, GridWrapped, Tabs},
     MainState,
 };
 
-type StepCallback = fn(&mut CreateInstance, &mut egui::Ui);
+use super::utils::select_icon;
 
-static STEPS: &[(&str, StepCallback)] = &[
-    ("Name", set_name),
-    ("Icon", set_icon),
-    ("Version", set_version),
+type StepCallback = fn(&mut CreateInstance, &mut StylistState, &mut egui::Ui);
+type StepValidationCallback = fn(&mut CreateInstance) -> Result<(), String>;
+
+static STEPS: &[(&str, StepCallback, StepValidationCallback)] = &[
+    ("Name", set_name, validate_name),
+    ("Icon", set_icon, validate_icon),
+    ("Version", set_version, validate_version),
 ];
 
 pub struct CreateInstance {
     curr_step: u8,
     max_step: u8,
-    name: String,
-    icons: Vec<Icon>,
+    icons: Vec<(String, Icon)>,
     grid: GridWrapped,
-    path: String,
-    icon_selected: usize,
-    version: Option<MinecraftVersion>,
+    versions: GridWrapped,
+    tabs_versions: Tabs<(u8, Vec<String>)>,
+    name: String,
+    icon_selected: String,
+    version_selected: Option<MinecraftVersion>,
 }
 
-impl Default for CreateInstance {
-    fn default() -> Self {
+impl CreateInstance {
+    pub fn new(mc: &ClientDownloader) -> Self {
         let path_icons = config_path("icons");
 
         let icons = path_icons
@@ -36,12 +47,48 @@ impl Default for CreateInstance {
             .flatten()
             .filter(|f| f.file_name().to_str().unwrap().ends_with(".png"))
             .flat_map(|f| {
-                Icon::image_from_path(
+                let path = f.path();
+                let path = path.to_str().unwrap();
+                let path = path.to_string();
+                let icon = Icon::image_from_path(
                     f.file_name().to_str().unwrap(),
-                    f.path().to_str().unwrap(),
+                    path.as_str(),
                     egui_extras::image::FitTo::Size(80, 80),
-                )
+                );
+                match icon {
+                    Ok(icon) => Ok((path, icon)),
+                    Err(e) => Err(e),
+                }
             })
+            .collect();
+
+        let versions = mc.get_list_versions();
+
+        let mc_releases = versions
+            .clone()
+            .iter()
+            .filter(|v| v.version_type == "release")
+            .map(|v| v.id.clone())
+            .collect();
+        let mc_snapshot = versions
+            .clone()
+            .iter()
+            .clone()
+            .filter(|v| &v.version_type == "snapshot")
+            .map(|v| v.id.clone())
+            .collect();
+        let mc_oldbeta = versions
+            .clone()
+            .iter()
+            .clone()
+            .filter(|v| &v.version_type == "old_beta")
+            .map(|v| v.id.clone())
+            .collect();
+        let mc_oldalpha = versions
+            .clone()
+            .iter()
+            .filter(|v| &v.version_type == "old_alpha")
+            .map(|v| v.id.clone())
             .collect();
 
         Self {
@@ -49,16 +96,38 @@ impl Default for CreateInstance {
             curr_step: 0,
             max_step: STEPS.len() as u8 - 1,
             grid: GridWrapped::default(),
+            versions: GridWrapped::default(),
+            tabs_versions: Tabs::new(
+                &[
+                    ("Release", (0u8, mc_releases)),
+                    ("Snapshots", (1u8, mc_snapshot)),
+                    ("Old Beta", (2u8, mc_oldbeta)),
+                    ("Old Alpha", (3u8, mc_oldalpha)),
+                ],
+                0,
+                20,
+                Color32::WHITE,
+            ),
             name: String::new(),
-            path: String::new(),
-            icon_selected: 0,
-            version: None,
+            icon_selected: String::new(),
+            version_selected: None,
         }
     }
-}
 
-impl CreateInstance {
-    pub fn show(&mut self, ui: &mut egui::Ui, state: &mut MainState) {
+    pub fn reset(&mut self) {
+        self.curr_step = 0;
+        self.version_selected = None;
+        self.icon_selected = String::new();
+        self.name = String::new();
+    }
+
+    pub fn show(
+        &mut self,
+        ui: &mut egui::Ui,
+        theme: &mut StylistState,
+        cfg: &mut LauncherSettings,
+        state: &mut MainState,
+    ) {
         ui.add_space(20.);
         egui_extras::StripBuilder::new(ui)
             .size(Size::relative(0.1)) // Progress
@@ -77,7 +146,7 @@ impl CreateInstance {
                                     let rect = ui.min_rect();
                                     let mut pos = rect.center();
                                     pos.x -= 200.;
-                                    for (i, (step, _)) in STEPS.iter().enumerate() {
+                                    for (i, (step, _, _)) in STEPS.iter().enumerate() {
                                         let i = i as u8;
                                         let painter = ui.painter();
                                         if i > self.curr_step {
@@ -119,24 +188,69 @@ impl CreateInstance {
                 });
                 strip.cell(|ui| {
                     let i = self.curr_step as usize;
-                    STEPS[i].1(self, ui);
+                    STEPS[i].1(self, theme, ui);
                 });
                 strip.cell(|ui| {
+                    ui.add_space(10.);
                     ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
-                        if self.curr_step == self.max_step {
-                            if ui.button("Finish").clicked() {
-                                state.sub_title = String::new();
-                                state.create_instance = false;
-                            }
-                        } else if ui.button("Next").clicked() {
-                            self.curr_step += 1;
-                        }
-                        if self.curr_step > 0 && ui.button("Prev").clicked() {
-                            self.curr_step -= 1;
-                        }
+                        next_prev_btn(ui, self, cfg, state);
                     });
                 });
             });
+    }
+}
+
+fn next_prev_btn(
+    ui: &mut egui::Ui,
+    ctx: &mut CreateInstance,
+    cfg: &mut LauncherSettings,
+    state: &mut MainState,
+) {
+    let size = egui::Vec2::new(70., 40.);
+    if ctx.curr_step == ctx.max_step {
+        let btn = ui.add(
+            eframe::egui::Button::new(RichText::new("Finish").size(20.))
+                .min_size(size)
+                .wrap(true),
+        );
+        if btn.clicked() {
+            state.sub_title = String::new();
+            state.create_instance = false;
+            cfg.add_instance(crate::settings::LauncherInstance {
+                name: ctx.name.clone(),
+                path: String::new(),
+                icon_path: ctx.icon_selected.clone(),
+                version: ctx.version_selected.clone(),
+            })
+        }
+    } else if ui
+        .add(
+            eframe::egui::Button::new(RichText::new("Next").size(20.))
+                .min_size(size)
+                .wrap(true),
+        )
+        .clicked()
+    {
+        match STEPS[ctx.curr_step as usize].2(ctx) {
+            Ok(_) => ctx.curr_step += 1,
+            Err(e) => add_toast(
+                &mut state.toasts,
+                "Invalid Input",
+                e.as_str(),
+                crate::widgets::OpenMCToastKind::Error,
+            ),
+        }
+    }
+    if ctx.curr_step > 0
+        && ui
+            .add(
+                eframe::egui::Button::new(RichText::new("Prev").size(20.))
+                    .min_size(size)
+                    .wrap(true),
+            )
+            .clicked()
+    {
+        ctx.curr_step -= 1;
     }
 }
 
@@ -145,7 +259,7 @@ fn create_label(ui: &mut egui::Ui, content: &str) {
     ui.add_space(10.);
 }
 
-fn set_name(data: &mut CreateInstance, ui: &mut egui::Ui) {
+fn set_name(data: &mut CreateInstance, _theme: &mut StylistState, ui: &mut egui::Ui) {
     ui.vertical_centered(|ui| {
         ui.add_space(30.);
         create_label(ui, "What Name have for your instance?");
@@ -153,29 +267,104 @@ fn set_name(data: &mut CreateInstance, ui: &mut egui::Ui) {
     });
 }
 
-fn set_icon(data: &mut CreateInstance, ui: &mut egui::Ui) {
+fn validate_name(data: &mut CreateInstance) -> Result<(), String> {
+    if data.name.is_empty() {
+        return Err("The name cannot empty".to_string());
+    }
+    if data.name.len() < 5 {
+        return Err("The name size need more than 5".to_string());
+    }
+    Ok(())
+}
+
+fn set_icon(data: &mut CreateInstance, theme: &mut StylistState, ui: &mut egui::Ui) {
     ui.vertical_centered(|ui| {
         // Icon
         create_label(ui, "Choose an icon that characterizes your instance");
         ui.add_space(20.);
-        data.grid.show(
+        let mut grid = data.grid;
+        let raw_selected = data.icon_selected.clone();
+        let selected = RefCell::new(raw_selected.clone());
+        grid.show(
             ui,
-            "Other",
+            Some("Other"),
             (100., 100.),
             data.icons.len(),
             |ui, i| {
                 ui.centered_and_justified(|ui| {
-                    ui.image(data.icons[i].id(ui.ctx()), (50., 50.));
+                    ui.image(data.icons[i].1.id(ui.ctx()), (50., 50.));
                 });
             },
             || {
-                info!("Other clicked");
+                if let Some(icon) = select_icon(theme) {
+                    selected.replace(icon.0.clone());
+                }
             },
-            |selected: usize| {
-                info!("Icon '{selected}' is clicked");
+            |s: usize| {
+                selected.replace(data.icons[s].0.clone());
             },
-        )
+        );
+        let mut selected = selected.borrow_mut();
+        if !selected.is_empty() {
+            data.icon_selected = selected.clone();
+            *selected = "".to_string();
+            info!("Icon is clicked; Path: {}", data.icon_selected);
+        }
+        data.grid = grid;
+    });
+}
+fn validate_icon(data: &mut CreateInstance) -> Result<(), String> {
+    if data.icon_selected.is_empty() {
+        return Err("Please select one icon".to_string());
+    }
+    let path = PathBuf::from(&data.icon_selected);
+    if !path.is_file() && !path.exists() {
+        return Err("The icon file not exists".to_string());
+    }
+    Ok(())
+}
+
+fn set_version(data: &mut CreateInstance, _theme: &mut StylistState, ui: &mut egui::Ui) {
+    ui.vertical_centered(|ui| {
+        create_label(ui, "Choose an icon that characterizes your instance");
+        ui.add_space(10.);
+        let mut grid = data.versions;
+        let (n, tab_content) = data.tabs_versions.show(ui);
+        let selected = RefCell::new(String::new());
+        ui.add_space(20.);
+        grid.show(
+            ui,
+            None,
+            (ui.available_width() - 20., 30.),
+            tab_content.len(),
+            |ui, i| {
+                ui.horizontal(|ui| {
+                    ui.label(tab_content[i].clone());
+                });
+            },
+            || {},
+            |s: usize| {
+                selected.replace(tab_content[s].clone());
+            },
+        );
+        let selected = selected.borrow();
+        if !selected.is_empty() {
+            data.version_selected = match n {
+                0 => Some(MinecraftVersion::Release(selected.clone())),
+                1 => Some(MinecraftVersion::Snapshot(selected.clone())),
+                2 => Some(MinecraftVersion::OldBeta(selected.clone())),
+                3 => Some(MinecraftVersion::OldAlpha(selected.clone())),
+                _ => None,
+            };
+            info!("Version Selected: {:?}", data.version_selected);
+        }
+        data.versions = grid;
     });
 }
 
-fn set_version(_data: &mut CreateInstance, _ui: &mut egui::Ui) {}
+fn validate_version(data: &mut CreateInstance) -> Result<(), String> {
+    if data.version_selected.is_none() {
+        return Err("Please select one version".to_string());
+    }
+    Ok(())
+}
