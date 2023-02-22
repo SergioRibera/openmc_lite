@@ -4,6 +4,7 @@ use crate::{
 };
 use clap::Parser;
 use log::{debug, trace};
+use mc_downloader::launcher_manifest::LauncherManifestVersion;
 use serde::{Deserialize, Serialize};
 
 mod load;
@@ -70,6 +71,19 @@ impl LauncherSettings {
         cfg
     }
 
+    pub fn add_instance(&mut self, instance: LauncherInstance) {
+        if self.instances.is_empty() {
+            self.last_launched = Some(instance.clone());
+        }
+        self.instances.push(instance);
+    }
+
+    pub fn remove_instance(&mut self, name: String) {
+        if let Some(pos) = self.instances.iter().position(|i| i.name == name) {
+            self.instances.remove(pos);
+        }
+    }
+
     pub fn save(&self) -> bool {
         trace!("Save Setting");
         let b = save_settings::<Self>(self.clone(), "launcher.conf");
@@ -91,6 +105,17 @@ impl ToString for MinecraftVersion {
             MinecraftVersion::Snapshot(v) => format!("{v} (Snapshot)"),
             MinecraftVersion::OldBeta(v) => format!("{v} (Old Beta)"),
             MinecraftVersion::OldAlpha(v) => format!("{v} (Old Alpha)"),
+        }
+    }
+}
+
+impl From<&LauncherManifestVersion> for MinecraftVersion {
+    fn from(v: &LauncherManifestVersion) -> Self {
+        match v.version_type.as_str() {
+            "release" => Self::Release(v.id.clone()),
+            "snapshot" => Self::Snapshot(v.id.clone()),
+            "old_beta" => Self::OldBeta(v.id.clone()),
+            _ => Self::OldAlpha(v.id.clone()),
         }
     }
 }
