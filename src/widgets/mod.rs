@@ -1,8 +1,8 @@
 mod grid_wrapped;
 mod icon_button;
+mod tabs;
 mod title_bar;
 mod toast;
-mod tabs;
 
 use crate::data::APP_INFO;
 use eframe::{egui::Ui, Frame};
@@ -12,8 +12,8 @@ use std::path::PathBuf;
 
 pub use grid_wrapped::*;
 pub use icon_button::IconButton;
-pub use title_bar::*;
 pub use tabs::*;
+pub use title_bar::*;
 pub use toast::*;
 
 pub trait AppComponent {
@@ -47,7 +47,9 @@ pub fn open_file_dialog(
         StylistFileDialog::Save => {
             let mut builder = rfd::FileDialog::new();
             if let Some(filter) = filter {
-                builder = builder.add_filter(filter.0, filter.1)
+                builder = builder
+                    .add_filter(filter.0, filter.1)
+                    .set_file_name("MyTheme.theme.toml")
             }
             builder.set_directory(&theme_folder).save_file()
         }

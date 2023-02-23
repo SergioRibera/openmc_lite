@@ -76,11 +76,16 @@ impl LauncherSettings {
             self.last_launched = Some(instance.clone());
         }
         self.instances.push(instance);
+        self.save();
     }
 
     pub fn remove_instance(&mut self, name: String) {
         if let Some(pos) = self.instances.iter().position(|i| i.name == name) {
             self.instances.remove(pos);
+            if self.last_launched.is_some() {
+                self.last_launched = None;
+            }
+            self.save();
         }
     }
 

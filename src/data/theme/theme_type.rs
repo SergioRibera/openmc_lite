@@ -18,17 +18,14 @@ pub enum ThemeType {
 
 impl From<&str> for ThemeType {
     fn from(v: &str) -> Self {
-        let value = v.to_lowercase();
-        let value = value.as_str();
-        match value {
+        match v {
             "light" => ThemeType::Light,
             "dark" => ThemeType::Dark,
             path_str => {
-                let content = fs::read_to_string(path_str).unwrap();
+                debug!("Reading theme from: {path_str}");
+                let content = fs::read_to_string(path_str.clone()).unwrap();
                 let theme = toml::from_str::<StylistState>(&content).unwrap();
-                let theme_name = format!("{:?}", PathBuf::from(path_str).file_name().unwrap());
-                debug!("Reading theme from: {path_str}\nTheme Name: {theme_name}");
-                ThemeType::Custom((theme_name, theme))
+                ThemeType::Custom((path_str.to_string(), theme))
             }
         }
     }
@@ -67,12 +64,12 @@ impl Serialize for ThemeType {
             ThemeType::Light => serializer.serialize_str("light"),
             ThemeType::Dark => serializer.serialize_str("dark"),
             ThemeType::Custom((name, _theme)) => {
-                let theme_name = name.to_lowercase().replace(' ', "_");
                 let mut theme_file =
                     app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, "").unwrap();
                 theme_file.push("themes");
                 fs::create_dir_all(&theme_file).unwrap();
-                theme_file.push(&theme_name);
+                theme_file.push(&name);
+                debug!("Path theme output {theme_file:?}");
                 serializer.serialize_str(theme_file.to_str().unwrap())
             }
         }
