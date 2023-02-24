@@ -12,16 +12,30 @@ use log::info;
 use crate::{
     resources::{icon::Icon, ResourceLoader},
     settings::{LauncherInstance, LauncherSettings},
-    widgets::{GridWrapped, IconButton},
+    widgets::{GridWrapped, GridWrappedBuilder, IconButton},
     MainState,
 };
 
-#[derive(Default)]
 pub struct Instances {
     selected: Option<LauncherInstance>,
     frame_sizes: Vec<Vec2>,
-    widget: GridWrapped,
+    widget: GridWrapped<u8>,
     resources: ResourceLoader,
+}
+
+impl Default for Instances {
+    fn default() -> Self {
+        Self {
+            selected: None,
+            frame_sizes: Vec::new(),
+            widget: GridWrappedBuilder::default()
+                .show_search()
+                .set_cell_size((200., 200.))
+                .set_button_text("Create Instance")
+                .build(),
+            resources: ResourceLoader::default(),
+        }
+    }
 }
 
 impl Instances {
@@ -40,12 +54,18 @@ impl Instances {
         let frame_sizes = RefCell::new(self.frame_sizes.clone());
         ui.add_space(20.);
         ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
-            self.widget.show(
+            let mut grid = self.widget.clone();
+            let mut reset = false;
+            grid.show(
                 ui,
-                Some("Create Instance"),
-                (200., 200.),
-                cfg.instances.len(),
-                |ui, i| {
+                Some(|| {
+                    widget.reset();
+                    reset = true;
+                    state.create_instance = true;
+                }),
+                None::<fn(usize, &u8, &str) -> bool>,
+                |ui, i, _| {
+                    let i = i.clone();
                     let mut frame_sizes = frame_sizes.borrow_mut();
                     ui.horizontal_centered(|ui| {
                         ui.add_space((ui.available_width() - frame_sizes[i].x) / 2.0);
@@ -67,10 +87,6 @@ impl Instances {
                         });
                         frame_sizes[i] = frame_response.response.rect.size();
                     });
-                },
-                || {
-                    widget.reset();
-                    state.create_instance = true;
                 },
                 |s: usize| {
                     selected.replace(Some(cfg.instances[s].clone()));
@@ -144,6 +160,10 @@ impl Instances {
                 });
             self.selected = select_instance.clone();
             self.frame_sizes = frame_sizes.take();
+            if reset {
+                grid.reset();
+            }
+            self.widget = grid.clone();
         });
     }
 }

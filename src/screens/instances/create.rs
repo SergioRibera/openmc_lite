@@ -10,7 +10,7 @@ use crate::{
     data::config_path,
     resources::icon::Icon,
     settings::{LauncherSettings, MinecraftVersion},
-    widgets::{add_toast, GridWrapped, Tabs},
+    widgets::{add_toast, GridWrapped, GridWrappedBuilder, Tabs},
     MainState,
 };
 
@@ -29,8 +29,8 @@ pub struct CreateInstance {
     curr_step: u8,
     max_step: u8,
     icons: Vec<(String, Icon)>,
-    grid: GridWrapped,
-    versions: GridWrapped,
+    grid: GridWrapped<u8>,
+    versions: GridWrapped<String>,
     tabs_versions: Tabs<(u8, Vec<String>)>,
     name: String,
     icon_selected: String,
@@ -60,7 +60,8 @@ impl CreateInstance {
                     Err(e) => Err(e),
                 }
             })
-            .collect();
+            .collect::<Vec<(String, Icon)>>();
+            let icons_len = icons.len();
 
         let versions = mc.get_list_versions();
 
@@ -95,8 +96,15 @@ impl CreateInstance {
             icons,
             curr_step: 0,
             max_step: STEPS.len() as u8 - 1,
-            grid: GridWrapped::default(),
-            versions: GridWrapped::default(),
+            grid: GridWrappedBuilder::default()
+                .show_search()
+                .set_items(vec![0u8; icons_len])
+                .set_cell_size((100., 100.))
+                .set_button_text("Custom")
+                .build(),
+            versions: GridWrappedBuilder::default()
+                .show_search()
+                .build(),
             tabs_versions: Tabs::new(
                 &[
                     ("Release", (0u8, mc_releases)),
@@ -282,23 +290,26 @@ fn set_icon(data: &mut CreateInstance, theme: &mut StylistState, ui: &mut egui::
         // Icon
         create_label(ui, "Choose an icon that characterizes your instance");
         ui.add_space(20.);
-        let mut grid = data.grid;
+        let mut grid = data.grid.clone();
         let raw_selected = data.icon_selected.clone();
         let selected = RefCell::new(raw_selected.clone());
         grid.show(
             ui,
-            Some("Other"),
-            (100., 100.),
-            data.icons.len(),
-            |ui, i| {
-                ui.centered_and_justified(|ui| {
-                    ui.image(data.icons[i].1.id(ui.ctx()), (50., 50.));
-                });
-            },
-            || {
+            Some(|| {
                 if let Some(icon) = select_icon(theme) {
                     selected.replace(icon.0.clone());
                 }
+            }),
+            Some(|i: usize, _: &u8, search: &str| {
+                data.icons[i]
+                    .0
+                    .to_lowercase()
+                    .contains(&search.to_lowercase())
+            }),
+            |ui, i, _| {
+                ui.centered_and_justified(|ui| {
+                    ui.image(data.icons[i].1.id(ui.ctx()), (50., 50.));
+                });
             },
             |s: usize| {
                 selected.replace(data.icons[s].0.clone());
@@ -328,25 +339,29 @@ fn set_version(data: &mut CreateInstance, _theme: &mut StylistState, ui: &mut eg
     ui.vertical_centered(|ui| {
         create_label(ui, "Choose an icon that characterizes your instance");
         ui.add_space(10.);
-        let mut grid = data.versions;
+        let mut grid = data.versions.clone();
         let (n, tab_content) = data.tabs_versions.show(ui);
         let selected = RefCell::new(String::new());
         ui.add_space(20.);
-        grid.show(
-            ui,
-            None,
-            (ui.available_width() - 20., 30.),
-            tab_content.len(),
-            |ui, i| {
-                ui.horizontal(|ui| {
-                    ui.label(tab_content[i].clone());
-                });
-            },
-            || {},
-            |s: usize| {
-                selected.replace(tab_content[s].clone());
-            },
-        );
+        grid.set_cell_size((ui.available_width() - 20., 30.))
+            .set_items(tab_content.clone())
+            .show(
+                ui,
+                None::<fn()>,
+                Some(|_: usize, item: &String, search: &str| {
+                    item.to_string()
+                        .to_lowercase()
+                        .contains(&search.to_lowercase())
+                }),
+                |ui, _i, item| {
+                    ui.horizontal(|ui| {
+                        ui.label(item.to_string());
+                    });
+                },
+                |s| {
+                    selected.replace(tab_content[s].clone());
+                },
+            );
         let selected = selected.borrow();
         if !selected.is_empty() {
             data.version_selected = match n {
