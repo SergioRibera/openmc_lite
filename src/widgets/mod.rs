@@ -3,6 +3,7 @@ mod icon_button;
 mod tabs;
 mod title_bar;
 mod toast;
+mod covered_image;
 
 use crate::data::APP_INFO;
 use eframe::{egui::Ui, Frame};
@@ -10,6 +11,7 @@ use egui_stylist::StylistFileDialog;
 use log::debug;
 use std::path::PathBuf;
 
+pub use covered_image::*;
 pub use grid_wrapped::*;
 pub use icon_button::IconButton;
 pub use tabs::*;

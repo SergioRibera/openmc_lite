@@ -1,6 +1,10 @@
 use eframe::egui::{ComboBox, Layout, Margin, RichText, Ui};
 
-use crate::{resources::ResourceLoader, settings::LauncherSettings};
+use crate::{
+    resources::ResourceLoader,
+    settings::LauncherSettings,
+    widgets::{CoveredImage, CoveredImageType},
+};
 
 pub fn home(ui: &mut Ui, conf: &LauncherSettings, res: &ResourceLoader) {
     let mut value = conf
@@ -12,7 +16,8 @@ pub fn home(ui: &mut Ui, conf: &LauncherSettings, res: &ResourceLoader) {
         .inner_margin(Margin::same(0.))
         .rounding(0.)
         .show(ui, |ui| {
-            ui.image(res.home_bg.texture_id(ui.ctx()), ui.available_size());
+            CoveredImage::show(ui, &res.home_bg, CoveredImageType::Cover, None);
+            // ui.image(res.home_bg.texture_id(ui.ctx()), ui.available_size());
             ui.with_layout(Layout::bottom_up(eframe::emath::Align::Min), |ui| {
                 ui.add_space(50.);
                 ui.horizontal(|ui| {
