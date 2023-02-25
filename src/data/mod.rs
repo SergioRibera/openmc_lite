@@ -26,7 +26,7 @@ pub fn config_path(path: &str) -> PathBuf {
 // on linux: ~/.local/share/{app_info.name}/{path}
 /// This function only works with folders
 pub fn data_path(path: &str) -> PathBuf {
-    let res = app_dirs::app_dir(app_dirs::AppDataType::UserConfig, &APP_INFO, path).unwrap();
+    let res = app_dirs::app_dir(app_dirs::AppDataType::UserData, &APP_INFO, path).unwrap();
     if !res.exists() {
         std::fs::create_dir_all(path).unwrap();
     }
