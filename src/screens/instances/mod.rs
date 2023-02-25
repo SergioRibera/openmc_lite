@@ -112,12 +112,14 @@ impl Instances {
                             let mut icon_path = path.clone();
                             icon_path.push_str("/icon.png");
                             ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
+                                ui.add_space(10.);
                                 let btn_close = ui.add_sized(
                                     (20., 20.),
                                     IconButton::new(&self.resources.icons.close),
                                 );
                                 if btn_close.clicked() {
                                     info!("Close SidePanel clicked!!");
+                                    grid.reset();
                                     *select_instance = None;
                                 }
                             });
