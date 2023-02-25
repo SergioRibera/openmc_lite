@@ -61,7 +61,7 @@ impl CreateInstance {
                 }
             })
             .collect::<Vec<(String, Icon)>>();
-            let icons_len = icons.len();
+        let icons_len = icons.len();
 
         let versions = mc.get_list_versions();
 
@@ -102,9 +102,7 @@ impl CreateInstance {
                 .set_cell_size((100., 100.))
                 .set_button_text("Custom")
                 .build(),
-            versions: GridWrappedBuilder::default()
-                .show_search()
-                .build(),
+            versions: GridWrappedBuilder::default().show_search().build(),
             tabs_versions: Tabs::new(
                 &[
                     ("Release", (0u8, mc_releases)),
@@ -224,12 +222,14 @@ fn next_prev_btn(
         if btn.clicked() {
             state.sub_title = String::new();
             state.create_instance = false;
-            cfg.add_instance(crate::settings::LauncherInstance {
-                name: ctx.name.clone(),
-                path: String::new(),
-                icon_path: ctx.icon_selected.clone(),
-                version: ctx.version_selected.clone(),
-            })
+            cfg.add_instance(
+                crate::settings::LauncherInstance {
+                    name: ctx.name.clone(),
+                    version: ctx.version_selected.clone(),
+                    ..Default::default()
+                },
+                ctx.icon_selected.clone(),
+            );
         }
     } else if ui
         .add(

@@ -1,9 +1,9 @@
 use crate::{
     args::{OpenMCArgs, OpenMCommands},
-    data::{config_path, theme::ThemeType},
+    data::{config_path, data_path, theme::ThemeType},
 };
 use clap::Parser;
-use log::{debug, trace};
+use log::{debug, info, trace};
 use mc_downloader::launcher_manifest::LauncherManifestVersion;
 use serde::{Deserialize, Serialize};
 
@@ -28,8 +28,10 @@ pub struct LauncherSettings {
 pub struct LauncherInstance {
     pub name: String,
     pub path: String,
-    pub icon_path: String,
     pub version: Option<MinecraftVersion>,
+    pub downloaded: bool,
+    #[serde(skip)]
+    pub downloading: bool,
 }
 
 // Specific version type and literal version
@@ -71,12 +73,41 @@ impl LauncherSettings {
         cfg
     }
 
-    pub fn add_instance(&mut self, instance: LauncherInstance) {
-        if self.instances.is_empty() {
+    pub fn add_instance(
+        &mut self,
+        instance: LauncherInstance,
+        icon_path: String,
+    ) -> std::path::PathBuf {
+        let name = instance.name.clone();
+        let folder_name = format!("instances/{}", name);
+        let path = data_path(folder_name.as_str());
+        data_path(format!("{folder_name}/mods").as_str());
+        data_path(format!("{folder_name}/resourcepacks").as_str());
+        data_path(format!("{folder_name}/saves").as_str());
+        data_path(format!("{folder_name}/shaderpacks").as_str());
+        debug!(
+            "The new path of instance: {path:?} - Exists: {}",
+            path.exists()
+        );
+        let new_icon_path = {
+            let mut path = path.clone();
+            path.push("icon.png");
+            path
+        };
+        std::fs::copy(icon_path, new_icon_path.clone()).unwrap();
+        info!("Icon copied Succesfull: {new_icon_path:?}");
+        let instance = LauncherInstance {
+            path: path.to_str().unwrap().to_string(),
+            ..instance
+        };
+        debug!("New LauncherInstance Information: {instance:?}");
+        if self.instances.is_empty() || self.last_launched.is_none() {
             self.last_launched = Some(instance.clone());
         }
         self.instances.push(instance);
+        info!("Instance pushed to instances list");
         self.save();
+        path
     }
 
     pub fn remove_instance(&mut self, name: String) {
@@ -85,6 +116,7 @@ impl LauncherSettings {
             if self.last_launched.is_some() {
                 self.last_launched = None;
             }
+            remove_instance_folder(name.as_str());
             self.save();
         }
     }
@@ -122,5 +154,14 @@ impl From<&LauncherManifestVersion> for MinecraftVersion {
             "old_beta" => Self::OldBeta(v.id.clone()),
             _ => Self::OldAlpha(v.id.clone()),
         }
+    }
+}
+
+fn remove_instance_folder(name: &str) {
+    let mut dir = data_path("instances");
+    dir.push(name);
+
+    if dir.exists() && dir.is_dir() {
+        std::fs::remove_dir_all(dir).unwrap();
     }
 }
