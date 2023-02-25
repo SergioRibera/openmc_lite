@@ -19,7 +19,7 @@ use crate::{
 pub struct Instances {
     selected: Option<LauncherInstance>,
     frame_sizes: Vec<Vec2>,
-    widget: GridWrapped<u8>,
+    widget: GridWrapped<LauncherInstance>,
     resources: ResourceLoader,
 }
 
@@ -56,14 +56,21 @@ impl Instances {
         ui.with_layout(Layout::left_to_right(egui::Align::Min), |ui| {
             let mut grid = self.widget.clone();
             let mut reset = false;
-            grid.show(
+            if self.selected.is_some() {
+                ui.set_max_width(ui.available_width() - 300.);
+            } else {
+                ui.set_max_width(ui.available_width());
+            }
+            grid.set_items(cfg.instances.clone()).show(
                 ui,
                 Some(|| {
                     widget.reset();
                     reset = true;
                     state.create_instance = true;
                 }),
-                None::<fn(usize, &u8, &str) -> bool>,
+                Some(|_: usize, item: &LauncherInstance, search: &str| {
+                    item.name.to_lowercase().contains(&search.to_lowercase())
+                }),
                 |ui, i, _| {
                     let i = i.clone();
                     let mut frame_sizes = frame_sizes.borrow_mut();
@@ -72,10 +79,12 @@ impl Instances {
                         let top_space = (ui.available_height() - frame_sizes[i].y) / 2.0;
                         let frame_response = ui.vertical_centered(|ui| {
                             ui.add_space(top_space);
+                            let mut icon_path = cfg.instances[i].path.clone();
+                            icon_path.push_str("/icon.png");
                             ui.image(
                                 Icon::image_from_path(
                                     cfg.instances[i].name.as_str(),
-                                    cfg.instances[i].icon_path.as_str(),
+                                    icon_path.as_str(),
                                     egui_extras::image::FitTo::Original,
                                 )
                                 .unwrap()
@@ -99,6 +108,9 @@ impl Instances {
                 .show_animated_inside(ui, self.selected.is_some(), |ui| {
                     ui.vertical_centered_justified(|ui| {
                         if let Some(instance) = select_instance.clone() {
+                            let path = instance.path.clone();
+                            let mut icon_path = path.clone();
+                            icon_path.push_str("/icon.png");
                             ui.with_layout(Layout::right_to_left(egui::Align::Min), |ui| {
                                 let btn_close = ui.add_sized(
                                     (20., 20.),
@@ -112,7 +124,7 @@ impl Instances {
                             ui.image(
                                 Icon::image_from_path(
                                     instance.name.as_str(),
-                                    instance.icon_path.as_str(),
+                                    icon_path.as_str(),
                                     egui_extras::image::FitTo::Original,
                                 )
                                 .unwrap()
@@ -144,7 +156,13 @@ impl Instances {
                                         Button::new("Edit").wrap(true),
                                     );
                                 });
-                                ui.add_sized(Vec2::new(width, 30.), Button::new("Open").wrap(true));
+                                let open_btn = ui.add_sized(
+                                    Vec2::new(width, 30.),
+                                    Button::new("Open").wrap(true),
+                                );
+                                if open_btn.clicked() {
+                                    open::that(path).unwrap();
+                                }
                                 let delete_btn = ui.add_sized(
                                     Vec2::new(width, 30.),
                                     Button::new("Delete").wrap(true).fill(Color32::LIGHT_RED),
