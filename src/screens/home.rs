@@ -1,4 +1,5 @@
 use eframe::egui::{ComboBox, Layout, Margin, RichText, Ui};
+use egui::Button;
 
 use crate::{
     resources::ResourceLoader,
@@ -30,8 +31,11 @@ pub fn home(ui: &mut Ui, conf: &LauncherSettings, res: &ResourceLoader) {
                                 ui.selectable_value(&mut value, i.name.clone(), i.name.clone());
                             })
                         });
-                    ui.add_space((ui.available_width() / 2.) - 20.);
-                    let _btn_play = ui.button(RichText::new("Jugar").size(32.));
+                    ui.add_space((ui.available_width() / 2.) - 40.);
+                    let _btn_play = ui.add_enabled(
+                        !value.is_empty(),
+                        Button::new(RichText::new("Jugar").size(32.)),
+                    );
                 });
             });
         });
