@@ -1,4 +1,4 @@
-use std::{fmt::Debug, fs, path::PathBuf};
+use std::{fmt::Debug, fs};
 
 use clap::ValueEnum;
 use egui::Context;
