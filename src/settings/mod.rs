@@ -68,17 +68,6 @@ impl LauncherSettings {
         let p = config_path("icons");
         cfg.exists_icons = p.is_dir() && p.read_dir().unwrap().count() > 1;
 
-        let data_path = data_path("versions");
-        cfg.instances.iter_mut().for_each(|i| {
-            if let Some(version) = i.version.clone() {
-                let mut data_path = data_path.clone();
-                data_path.push(version.get_version_id());
-                data_path.push(&format!("{}.json", version.get_version_id()));
-                info!("Path Instance Version: {data_path:?}");
-                i.downloaded = data_path.exists() && data_path.is_file();
-            }
-        });
-
         if let Some(t) = opts.theme {
             cfg.theme = t;
         }
