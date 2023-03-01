@@ -42,7 +42,6 @@ pub struct MainApplication {
     curr_view: ViewType,
     instances_widget: Instances,
     create_widget: CreateInstance,
-    mc_downloader: Option<ClientDownloader>,
     downloader: Option<DownloaderService>,
     state: MainState,
 }
@@ -64,7 +63,6 @@ impl MainApplication {
             instances_widget: Instances::default(),
             create_widget: CreateInstance::new(&mc),
             titlebar: TitleBar::default(),
-            mc_downloader: Some(mc),
             downloader: if !launcher_config.exists_icons {
                 Some(create_icons_svc())
             } else {
