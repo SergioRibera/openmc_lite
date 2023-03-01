@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use crate::{
     args::{OpenMCArgs, OpenMCommands},
     data::{config_path, data_path, theme::ThemeType},
@@ -35,7 +37,7 @@ pub struct LauncherInstance {
 }
 
 // Specific version type and literal version
-#[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub enum MinecraftVersion {
     Release(String),
     Snapshot(String),
@@ -65,6 +67,17 @@ impl LauncherSettings {
 
         let p = config_path("icons");
         cfg.exists_icons = p.is_dir() && p.read_dir().unwrap().count() > 1;
+
+        let data_path = data_path("versions");
+        cfg.instances.iter_mut().for_each(|i| {
+            if let Some(version) = i.version.clone() {
+                let mut data_path = data_path.clone();
+                data_path.push(version.get_version_id());
+                data_path.push(&format!("{}.json", version.get_version_id()));
+                info!("Path Instance Version: {data_path:?}");
+                i.downloaded = data_path.exists() && data_path.is_file();
+            }
+        });
 
         if let Some(t) = opts.theme {
             cfg.theme = t;
@@ -132,6 +145,32 @@ impl LauncherSettings {
 impl ToString for LauncherInstance {
     fn to_string(&self) -> String {
         self.name.clone()
+    }
+}
+
+impl Debug for MinecraftVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.to_string())
+    }
+}
+
+impl MinecraftVersion {
+    pub fn get_version_id(&self) -> String {
+        match self {
+            MinecraftVersion::Release(v) => v.clone(),
+            MinecraftVersion::Snapshot(v) => v.clone(),
+            MinecraftVersion::OldBeta(v) => v.clone(),
+            MinecraftVersion::OldAlpha(v) => v.clone(),
+        }
+    }
+
+    pub fn get_version_type(&self) -> String {
+        match self {
+            MinecraftVersion::Release(_) => "release".to_string(),
+            MinecraftVersion::Snapshot(_) => "snapshot".to_string(),
+            MinecraftVersion::OldBeta(_) => "old_beta".to_string(),
+            MinecraftVersion::OldAlpha(_) => "old_alpha".to_string(),
+        }
     }
 }
 
