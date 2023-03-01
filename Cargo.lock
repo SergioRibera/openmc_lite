@@ -1846,9 +1846,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "mc_bootstrap"
+version = "0.1.0"
+source = "git+https://github.com/sergioribera/minecraft_bootstrap?branch=main#d01b43c583b0aae34760d7109f9f94a1a57f4205"
+dependencies = [
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "mc_downloader"
 version = "0.1.0"
-source = "git+https://github.com/SergioRibera/openmc_downloader?branch=simple_refactor#3c3ae625db6e6b1d3dfb19368d3c1f1bfd44d894"
+source = "git+https://github.com/sergioribera/openmc_downloader?branch=simple_refactor#3c3ae625db6e6b1d3dfb19368d3c1f1bfd44d894"
 dependencies = [
  "async-trait",
  "digest 0.10.6",
@@ -2170,6 +2180,7 @@ dependencies = [
  "env_logger",
  "image",
  "log",
+ "mc_bootstrap",
  "mc_downloader",
  "once_cell",
  "open",
