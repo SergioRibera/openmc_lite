@@ -1,9 +1,10 @@
+mod covered_image;
 mod grid_wrapped;
 mod icon_button;
+mod progress_button;
 mod tabs;
 mod title_bar;
 mod toast;
-mod covered_image;
 
 use crate::data::APP_INFO;
 use eframe::{egui::Ui, Frame};
@@ -14,6 +15,7 @@ use std::path::PathBuf;
 pub use covered_image::*;
 pub use grid_wrapped::*;
 pub use icon_button::IconButton;
+pub use progress_button::*;
 pub use tabs::*;
 pub use title_bar::*;
 pub use toast::*;
