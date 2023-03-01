@@ -6,7 +6,7 @@ pub use icons::*;
 use log::info;
 use mc_downloader::prelude::Reporter;
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DownloadProgressMessage {
     Setup(u64),
     Update(u64, u64),
@@ -44,12 +44,13 @@ impl Reporter for DownloadProgress {
     }
 
     fn progress(&mut self, current: u64) {
+        self.curr_progress += current;
         info!(
-            "Setup progress\nCurr: {current}\nMax: {}",
+            "Setup progress\nIncoming: {current}\nCurrent: {}\nMax: {}",
+            self.curr_progress,
             self.max_progress
         );
         if current > 0 {
-            self.curr_progress += current;
             self.sender
                 .send(DownloadProgressMessage::Update(
                     self.curr_progress,
