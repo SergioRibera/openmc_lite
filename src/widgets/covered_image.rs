@@ -13,11 +13,11 @@ impl CoveredImage {
     pub fn show(
         ui: &mut egui::Ui,
         image: &RetainedImage,
+        container_rect: Rect,
         t: CoveredImageType,
         tint: Option<Color32>,
     ) {
         let painter = ui.painter();
-        let container_rect = ui.max_rect();
         let image_size = image.size_vec2();
         let w_ratio = container_rect.width() / image_size.x;
         let h_ratio = container_rect.height() / image_size.y;

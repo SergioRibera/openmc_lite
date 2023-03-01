@@ -11,6 +11,7 @@ pub use self::icon_loader::Icons;
 pub struct ResourceLoader {
     pub icons: Icons,
     pub home_bg: RetainedImage,
+    pub btn_bg: RetainedImage,
     // theme: Theme,
 }
 
@@ -21,6 +22,11 @@ impl Default for ResourceLoader {
             home_bg: RetainedImage::from_image_bytes(
                 "home_background",
                 include_bytes!("../../assets/bg.jpg"),
+            )
+            .unwrap(),
+            btn_bg: RetainedImage::from_image_bytes(
+                "play_button_background",
+                include_bytes!("../../assets/play_btn_bg.png"),
             )
             .unwrap(),
         }
