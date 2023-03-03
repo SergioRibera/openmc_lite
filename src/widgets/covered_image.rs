@@ -17,6 +17,9 @@ impl CoveredImage {
         t: CoveredImageType,
         tint: Option<Color32>,
     ) {
+        if !ui.is_rect_visible(container_rect) {
+            return;
+        }
         let painter = ui.painter();
         let image_size = image.size_vec2();
         let w_ratio = container_rect.width() / image_size.x;

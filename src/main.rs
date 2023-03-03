@@ -19,11 +19,24 @@ fn main() -> Result<(), eframe::Error> {
     env_logger::Builder::from_env(env_logger::Env::new().filter_or("OPENMC_LOG", "warn"))
         .format_timestamp(None)
         .init();
+    let icon_data = {
+        let image = image::load_from_memory(include_bytes!("../assets/app.png"))
+            .expect("failed to load icon");
+        let image_buffer = image.to_rgba8();
+        eframe::IconData {
+            width: image.width(),
+            height: image.height(),
+            rgba: image_buffer.into_vec(),
+        }
+    };
+
     let options = eframe::NativeOptions {
         decorated: false,
+        centered: true,
+        // transparent: true,
         initial_window_size: Some(eframe::egui::vec2(1080., 720.)),
         min_window_size: Some(eframe::egui::vec2(1080., 720.)),
-        centered: true,
+        icon_data: Some(icon_data),
         ..Default::default()
     };
 
@@ -80,12 +93,16 @@ impl MainApplication {
 impl eframe::App for MainApplication {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
+            #[cfg(debug_assertions)]
+            openmc_lite::stats::show_windows(ctx, &self.state, &mut self.launcher_config);
+
             ui.vertical(|ui| {
                 self.titlebar.draw_title_bar_ui(
                     ui,
                     frame,
                     ui.max_rect(),
                     &mut self.state,
+                    &mut self.launcher_config,
                     &mut self.downloader,
                 );
                 ui.add_space(20.);

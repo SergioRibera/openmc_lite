@@ -9,6 +9,8 @@ pub struct Icons {
     pub maximize: Icon,
     pub restore: Icon,
     pub close: Icon,
+    pub light_mode: Icon,
+    pub night_mode: Icon,
 }
 
 impl Icons {
@@ -20,6 +22,8 @@ impl Icons {
             minimize: Icon::from_svg("minus.svg", FitTo::Size(24, 24))?,
             maximize: Icon::from_svg("maximize.svg", FitTo::Size(24, 24))?,
             restore: Icon::from_svg("restore.svg", FitTo::Size(24, 24))?,
+            light_mode: Icon::from_svg("light-mode.svg", FitTo::Size(24, 24))?,
+            night_mode: Icon::from_svg("night-mode.svg", FitTo::Size(24, 24))?,
         };
 
         Ok(this)

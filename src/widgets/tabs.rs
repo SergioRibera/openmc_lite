@@ -9,7 +9,10 @@ pub struct Tabs<T: Clone> {
     selected: usize,
 }
 
-impl<T> Tabs<T> where T: Clone {
+impl<T> Tabs<T>
+where
+    T: Clone,
+{
     pub fn new(
         tabs: &[(&str, T)],
         default_selected: usize,
@@ -21,7 +24,10 @@ impl<T> Tabs<T> where T: Clone {
             text_color,
             changed: false,
             selected: default_selected,
-            tabs: tabs.iter().map(|t| (t.0.to_string(), t.1.clone())).collect(),
+            tabs: tabs
+                .iter()
+                .map(|t| (t.0.to_string(), t.1.clone()))
+                .collect(),
         }
     }
 

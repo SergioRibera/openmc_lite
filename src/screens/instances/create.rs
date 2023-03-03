@@ -1,6 +1,6 @@
 use std::{cell::RefCell, path::PathBuf};
 
-use egui::{Color32, FontId, Layout, RichText, Stroke};
+use egui::{Color32, Layout, RichText};
 use egui_extras::Size;
 use egui_stylist::StylistState;
 use log::info;
@@ -10,14 +10,14 @@ use crate::{
     data::config_path,
     resources::icon::Icon,
     settings::{LauncherSettings, MinecraftVersion},
-    widgets::{add_toast, GridWrapped, GridWrappedBuilder, Tabs},
+    widgets::{add_toast, GridWrapped, GridWrappedBuilder, Steps, Tabs},
     MainState,
 };
 
 use super::utils::select_icon;
 
 type StepCallback = fn(&mut CreateInstance, &mut StylistState, &mut egui::Ui);
-type StepValidationCallback = fn(&mut CreateInstance) -> Result<(), String>;
+type StepValidationCallback = fn(&mut CreateInstance, &mut LauncherSettings) -> Result<(), String>;
 
 static STEPS: &[(&str, StepCallback, StepValidationCallback)] = &[
     ("Name", set_name, validate_name),
@@ -31,6 +31,7 @@ pub struct CreateInstance {
     icons: Vec<(String, Icon)>,
     grid: GridWrapped<u8>,
     versions: GridWrapped<String>,
+    steps: Steps,
     tabs_versions: Tabs<(u8, Vec<String>)>,
     name: String,
     icon_selected: String,
@@ -61,7 +62,7 @@ impl CreateInstance {
                 }
             })
             .collect::<Vec<(String, Icon)>>();
-        let icons_len = icons.len();
+        let icons_len = icons.len() as u8;
 
         let versions = mc.get_list_versions();
 
@@ -96,13 +97,18 @@ impl CreateInstance {
             icons,
             curr_step: 0,
             max_step: STEPS.len() as u8 - 1,
+            steps: Steps::with_steps(STEPS.iter().map(|(n, _, _)| n.clone()).collect()),
             grid: GridWrappedBuilder::default()
+                .set_enabled(true)
                 .show_search()
-                .set_items(vec![0u8; icons_len])
+                .set_items((0u8..icons_len).collect::<Vec<u8>>())
                 .set_cell_size((100., 100.))
                 .set_button_text("Custom")
                 .build(),
-            versions: GridWrappedBuilder::default().show_search().build(),
+            versions: GridWrappedBuilder::default()
+                .show_search()
+                .set_enabled(true)
+                .build(),
             tabs_versions: Tabs::new(
                 &[
                     ("Release", (0u8, mc_releases)),
@@ -149,44 +155,7 @@ impl CreateInstance {
                             strip.empty();
                             strip.cell(|ui| {
                                 ui.vertical_centered_justified(|ui| {
-                                    let rect = ui.min_rect();
-                                    let mut pos = rect.center();
-                                    pos.x -= 200.;
-                                    for (i, (step, _, _)) in STEPS.iter().enumerate() {
-                                        let i = i as u8;
-                                        let painter = ui.painter();
-                                        if i > self.curr_step {
-                                            painter.circle_stroke(
-                                                pos,
-                                                10.,
-                                                Stroke::new(1.5, Color32::GREEN),
-                                            );
-                                        } else {
-                                            painter.circle_filled(pos, 10., Color32::GREEN);
-                                        }
-                                        {
-                                            pos.x += 25.;
-                                            pos.x += painter
-                                                .text(
-                                                    pos,
-                                                    egui::Align2::LEFT_CENTER,
-                                                    step,
-                                                    FontId::proportional(24.),
-                                                    Color32::WHITE,
-                                                )
-                                                .width()
-                                                + 10.;
-                                        }
-                                        if i < self.max_step {
-                                            let mut to = pos;
-                                            to.x += 50.;
-                                            painter.line_segment(
-                                                [pos, to],
-                                                Stroke::new(1.5, Color32::GREEN),
-                                            );
-                                            pos.x += 70.;
-                                        }
-                                    }
+                                    ui.add(self.steps.set_current(self.curr_step as usize).clone());
                                 });
                             });
                             strip.empty();
@@ -239,7 +208,7 @@ fn next_prev_btn(
         )
         .clicked()
     {
-        match STEPS[ctx.curr_step as usize].2(ctx) {
+        match STEPS[ctx.curr_step as usize].2(ctx, cfg) {
             Ok(_) => ctx.curr_step += 1,
             Err(e) => add_toast(
                 &mut state.toasts,
@@ -275,12 +244,15 @@ fn set_name(data: &mut CreateInstance, _theme: &mut StylistState, ui: &mut egui:
     });
 }
 
-fn validate_name(data: &mut CreateInstance) -> Result<(), String> {
+fn validate_name(data: &mut CreateInstance, cfg: &mut LauncherSettings) -> Result<(), String> {
     if data.name.is_empty() {
         return Err("The name cannot empty".to_string());
     }
-    if data.name.len() < 5 {
+    if data.name.len() < 3 {
         return Err("The name size need more than 5".to_string());
+    }
+    if cfg.instances.iter().any(|i| i.name == data.name) {
+        return Err("An instance of this name already exists".to_string());
     }
     Ok(())
 }
@@ -291,8 +263,7 @@ fn set_icon(data: &mut CreateInstance, theme: &mut StylistState, ui: &mut egui::
         create_label(ui, "Choose an icon that characterizes your instance");
         ui.add_space(20.);
         let mut grid = data.grid.clone();
-        let raw_selected = data.icon_selected.clone();
-        let selected = RefCell::new(raw_selected.clone());
+        let selected = RefCell::new(String::new());
         grid.show(
             ui,
             Some(|| {
@@ -306,25 +277,24 @@ fn set_icon(data: &mut CreateInstance, theme: &mut StylistState, ui: &mut egui::
                     .to_lowercase()
                     .contains(&search.to_lowercase())
             }),
-            |ui, i, _| {
+            |ui, _, v| {
                 ui.centered_and_justified(|ui| {
-                    ui.image(data.icons[i].1.id(ui.ctx()), (50., 50.));
+                    ui.image(data.icons[*v as usize].1.id(ui.ctx()), (50., 50.));
                 });
             },
             |s: usize| {
                 selected.replace(data.icons[s].0.clone());
             },
         );
-        let mut selected = selected.borrow_mut();
+        let selected = selected.borrow();
         if !selected.is_empty() {
             data.icon_selected = selected.clone();
-            *selected = "".to_string();
             info!("Icon is clicked; Path: {}", data.icon_selected);
         }
         data.grid = grid;
     });
 }
-fn validate_icon(data: &mut CreateInstance) -> Result<(), String> {
+fn validate_icon(data: &mut CreateInstance, _cfg: &mut LauncherSettings) -> Result<(), String> {
     if data.icon_selected.is_empty() {
         return Err("Please select one icon".to_string());
     }
@@ -377,7 +347,7 @@ fn set_version(data: &mut CreateInstance, _theme: &mut StylistState, ui: &mut eg
     });
 }
 
-fn validate_version(data: &mut CreateInstance) -> Result<(), String> {
+fn validate_version(data: &mut CreateInstance, _cfg: &mut LauncherSettings) -> Result<(), String> {
     if data.version_selected.is_none() {
         return Err("Please select one version".to_string());
     }

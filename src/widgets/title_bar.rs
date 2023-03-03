@@ -5,17 +5,17 @@ use log::{debug, info};
 use mc_downloader::prelude::DownloaderService;
 
 use crate::{
-    data::APP_NAME,
+    data::{APP_NAME, theme::ThemeType},
     download_svc::{DownloadProgress, DownloadProgressMessage},
-    resources::ResourceLoader,
+    resources::Icons,
     widgets::add_toast,
-    MainState,
+    MainState, settings::LauncherSettings,
 };
 
 use super::IconButton;
 
 pub struct TitleBar {
-    resources: ResourceLoader,
+    resources: Icons,
     start_download: bool,
     curr_progress: f32,
     progress: DownloadProgress,
@@ -31,7 +31,7 @@ impl Default for TitleBar {
             progress_rcv,
             curr_progress: 0.,
             start_download: false,
-            resources: ResourceLoader::default(),
+            resources: Icons::preload().unwrap(),
         }
     }
 }
@@ -43,6 +43,7 @@ impl TitleBar {
         frame: &mut eframe::Frame,
         app_rect: egui::Rect,
         state: &mut MainState,
+        cfg: &mut LauncherSettings,
         downloader: &mut Option<DownloaderService>,
     ) {
         use egui::*;
@@ -91,12 +92,12 @@ impl TitleBar {
         // User Profile
         ui.allocate_ui_at_rect(title_bar_rect, |ui| {
             ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                ui.image(self.resources.icons.app.id(ui.ctx()), (32., 32.));
+                ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
                 ui.vertical(|ui| {
                     ui.label("Sergio Ribera");
                     ui.label("OFFLINE");
                 });
-                ui.image(self.resources.icons.expand_arrow.id(ui.ctx()), (10., 10.));
+                ui.image(self.resources.expand_arrow.id(ui.ctx()), (10., 10.));
                 ui.interact_with_hovered(
                     ui.max_rect(),
                     true,
@@ -114,7 +115,7 @@ impl TitleBar {
                 ui.add_space(8.0);
 
                 let close_btn = ui
-                    .add(IconButton::new(&self.resources.icons.close))
+                    .add(IconButton::new(&self.resources.close))
                     .on_hover_text("Close Window");
                 if close_btn.clicked() {
                     frame.close();
@@ -122,14 +123,14 @@ impl TitleBar {
                 if !frame.is_web() {
                     if frame.info().window_info.maximized {
                         let maximized_response = ui
-                            .add(IconButton::new(&self.resources.icons.restore))
+                            .add(IconButton::new(&self.resources.restore))
                             .on_hover_text("Restore window");
                         if maximized_response.clicked() {
                             frame.set_maximized(false);
                         }
                     } else {
                         let maximized_response = ui
-                            .add(IconButton::new(&self.resources.icons.maximize))
+                            .add(IconButton::new(&self.resources.maximize))
                             .on_hover_text("Maximize window");
                         if maximized_response.clicked() {
                             frame.set_maximized(true);
@@ -137,12 +138,13 @@ impl TitleBar {
                     }
 
                     let minimized_response = ui
-                        .add(IconButton::new(&self.resources.icons.minimize))
+                        .add(IconButton::new(&self.resources.minimize))
                         .on_hover_text("Minimize the window");
                     if minimized_response.clicked() {
                         frame.set_minimized(true);
                     }
                 }
+                self.toggle_themes(ui, cfg);
             });
         });
 
@@ -158,7 +160,7 @@ impl TitleBar {
             }
         }
         if self.start_download {
-            while let Ok(msg) = self.progress_rcv.try_recv() {
+           while let Ok(msg) = self.progress_rcv.try_recv() {
                 match msg {
                     DownloadProgressMessage::Setup(_) => add_toast(
                         &mut state.toasts,
@@ -183,6 +185,20 @@ impl TitleBar {
                     painter.line_segment([pos, to], Stroke::new(1.5, Color32::LIGHT_BLUE));
                 });
             }
+        }
+    }
+
+    pub fn toggle_themes(&self, ui: &mut egui::Ui, cfg: &mut LauncherSettings) {
+        let (icon, new_theme) = match cfg.theme {
+            ThemeType::Light => (&self.resources.night_mode, ThemeType::Dark),
+            ThemeType::Dark => (&self.resources.light_mode, ThemeType::Light),
+            ThemeType::Custom(_) => (&self.resources.light_mode, ThemeType::Light),
+        };
+
+        let toggle_btn = ui.add_sized((24., 24.), IconButton::new(icon)).on_hover_text("Toggle Theme");
+        if toggle_btn.clicked() {
+            cfg.theme = new_theme;
+            cfg.save();
         }
     }
 }

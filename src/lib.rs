@@ -6,6 +6,9 @@ pub mod screens;
 pub mod settings;
 pub mod widgets;
 
+#[cfg(debug_assertions)]
+pub mod stats;
+
 use egui_toast::Toasts;
 use widgets::create_toast;
 

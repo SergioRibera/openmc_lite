@@ -2,12 +2,12 @@ mod covered_image;
 mod grid_wrapped;
 mod icon_button;
 mod progress_button;
+mod steps;
 mod tabs;
 mod title_bar;
 mod toast;
 
 use crate::data::APP_INFO;
-use eframe::{egui::Ui, Frame};
 use egui_stylist::StylistFileDialog;
 use log::debug;
 use std::path::PathBuf;
@@ -16,19 +16,10 @@ pub use covered_image::*;
 pub use grid_wrapped::*;
 pub use icon_button::IconButton;
 pub use progress_button::*;
+pub use steps::*;
 pub use tabs::*;
 pub use title_bar::*;
 pub use toast::*;
-
-pub trait AppComponent {
-    type Context;
-
-    #[allow(unused)]
-    fn add(ctx: &mut Self::Context, ui: &mut Ui) {}
-
-    #[allow(unused)]
-    fn with_frame(ctx: &mut Self::Context, ui: &mut Ui, frame: &mut Frame) {}
-}
 
 pub fn open_file_dialog(
     kind: StylistFileDialog,

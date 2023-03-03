@@ -3,13 +3,12 @@ use egui_extras::RetainedImage;
 pub mod icon;
 
 mod icon_loader;
+
+pub use icon_loader::Icons;
 // @TODO
 // mod theme;
 
-pub use self::icon_loader::Icons;
-
 pub struct ResourceLoader {
-    pub icons: Icons,
     pub home_bg: RetainedImage,
     pub btn_bg: RetainedImage,
     // theme: Theme,
@@ -18,7 +17,6 @@ pub struct ResourceLoader {
 impl Default for ResourceLoader {
     fn default() -> Self {
         ResourceLoader {
-            icons: Icons::preload().unwrap(),
             home_bg: RetainedImage::from_image_bytes(
                 "home_background",
                 include_bytes!("../../assets/bg.jpg"),

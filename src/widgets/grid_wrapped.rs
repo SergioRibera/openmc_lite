@@ -1,8 +1,11 @@
+use std::fmt::Debug;
+
 use egui::{Color32, Layout, RichText, Sense, Stroke, Ui, Vec2};
 use log::{debug, info};
 
 #[derive(Default)]
 pub struct GridWrappedBuilder<T: Clone> {
+    enabled: bool,
     show_search: bool,
     button_str: String,
     cell_size: Vec2,
@@ -12,6 +15,7 @@ pub struct GridWrappedBuilder<T: Clone> {
 #[derive(Clone)]
 pub struct GridWrapped<T: Clone> {
     sended: bool,
+    enabled: bool,
     show_search: bool,
     search_text: String,
     selected: Option<usize>,
@@ -27,6 +31,7 @@ where
     fn default() -> Self {
         Self {
             sended: false,
+            enabled: false,
             show_search: true,
             selected: None,
             total_items: Vec::new(),
@@ -43,6 +48,11 @@ where
 {
     pub fn show_search(&mut self) -> &mut Self {
         self.show_search = true;
+        self
+    }
+
+    pub fn set_enabled(&mut self, value: bool) -> &mut Self {
+        self.enabled = value;
         self
     }
 
@@ -64,6 +74,7 @@ where
     pub fn build(&self) -> GridWrapped<T> {
         info!("Building Wrapped: {}", self.total_items.len());
         GridWrapped {
+            enabled: self.enabled,
             show_search: self.show_search || self.total_items.len() > 20,
             button_str: self.button_str.clone(),
             cell_size: self.cell_size.clone(),
@@ -75,10 +86,15 @@ where
 
 impl<T> GridWrapped<T>
 where
-    T: Clone,
+    T: Clone + Debug,
 {
     pub fn set_cell_size(&mut self, cell_size: impl Into<Vec2>) -> &mut Self {
         self.cell_size = cell_size.into();
+        self
+    }
+
+    pub fn set_enabled(&mut self, value: bool) -> &mut Self {
+        self.enabled = value;
         self
     }
 
@@ -100,6 +116,9 @@ where
         draw_item: impl FnOnce(&mut Ui, usize, &T) + Copy,
         on_change: impl FnOnce(usize),
     ) {
+        if !ui.is_rect_visible(ui.clip_rect()) {
+            return;
+        }
         ui.vertical(|ui| {
             if self.show_search {
                 ui.horizontal(|ui| {
@@ -124,7 +143,7 @@ where
                         "Text: {}\nTotal: {}\nFiltered: {}",
                         self.search_text,
                         self.total_items.len(),
-                        items.len()
+                        items.len(),
                     );
                 }
             }
@@ -138,7 +157,8 @@ where
                                 ui.allocate_at_least(self.cell_size.clone().into(), Sense::click());
 
                             ui.allocate_ui_at_rect(rect, |ui| {
-                                let btn = ui.add(
+                                let btn = ui.add_enabled(
+                                    self.enabled,
                                     eframe::egui::Button::new(
                                         RichText::new(self.button_str.clone()).size(20.),
                                     )
@@ -159,17 +179,23 @@ where
                             rect_margin.max.x += 5.;
                             rect_margin.max.y += 5.;
 
-                            ui.allocate_ui_at_rect(rect_margin, |ui| {
-                                let color = if let Some(selected) = self.selected {
-                                    if selected == i {
-                                        Color32::from_gray(64)
-                                    } else {
-                                        Color32::TRANSPARENT
-                                    }
+                            let color = if let Some(selected) = self.selected {
+                                if selected == i && self.search_text.is_empty() {
+                                    Color32::from_gray(64)
                                 } else {
                                     Color32::TRANSPARENT
-                                };
-                                if resp.hovered() {
+                                }
+                            } else {
+                                Color32::TRANSPARENT
+                            };
+
+                            ui.allocate_ui_at_rect(rect_margin, |ui| {
+                                if resp.hovered() && self.enabled {
+                                    if self.selected.is_some() {
+                                        if self.selected.unwrap() == i {
+                                            ui.painter().rect_filled(rect, 5., color);
+                                        }
+                                    }
                                     ui.painter().rect_stroke(
                                         rect,
                                         5.,
@@ -180,7 +206,7 @@ where
                                 }
                                 draw_item(ui, i, item);
                             });
-                            if resp.clicked() {
+                            if resp.clicked() && self.enabled {
                                 self.selected = Some(i);
                                 self.sended = false;
                             }
