@@ -158,7 +158,7 @@ impl Instances {
             .exact_width(300.)
             .show_animated_inside(ui, r_instance.is_some(), |ui| {
                 ui.vertical_centered_justified(|ui| {
-                    if let Some(instance) = r_instance.as_mut() {
+                    if let Some(ref mut instance) = *r_instance {
                         if !instance.downloaded {
                             self.download_button.set_text("Start Download");
                         }
@@ -208,7 +208,7 @@ impl Instances {
         if binding.is_none() {
             return;
         }
-        let mut mut_instance = binding.clone().unwrap();
+        let mut_instance = binding.as_mut().unwrap();
         // Buttons
         ui.horizontal(|ui| {
             // progress for downloading
@@ -235,7 +235,6 @@ impl Instances {
                             debug!("Message Downloaded!!");
                             mut_instance.downloading = false;
                             mut_instance.downloaded = true;
-                            binding.replace(mut_instance.clone());
                             self.download_button
                                 .set_progress(0.)
                                 .set_text("Launch")
@@ -252,6 +251,9 @@ impl Instances {
                         }
                     }
                 }
+            }
+            if mut_instance.downloaded {
+                self.download_button.set_progress(0.).set_text("Launch");
             }
             // Launch
             let width = ui.available_width() - 10.;
@@ -276,7 +278,6 @@ impl Instances {
                         debug!("Downloading");
                         mut_instance.downloading = true;
                         self.download_button.set_text("Downloading...");
-                        binding.replace(mut_instance.clone());
                     }
                     if mut_instance.downloaded {
                         let v = mut_instance.version.clone().unwrap();
@@ -317,6 +318,11 @@ impl Instances {
                     cfg.remove_instance(mut_instance.name.clone());
                 }
             });
+        });
+        cfg.instances.iter_mut().for_each(|i| {
+            if i.name == mut_instance.name {
+                *i = mut_instance.clone();
+            }
         });
     }
 }

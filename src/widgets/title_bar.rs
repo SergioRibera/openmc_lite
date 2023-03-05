@@ -103,6 +103,7 @@ impl TitleBar {
                     .add(IconButton::new(&self.resources.close))
                     .on_hover_text("Close Window");
                 if close_btn.clicked() {
+                    cfg.save();
                     frame.close();
                 };
                 if !frame.is_web() {

@@ -92,7 +92,9 @@ pub struct LauncherSettings {
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Eq)]
 #[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct LauncherInstance {
+    #[cfg_attr(feature = "inspect", inspect(no_edit))]
     pub name: String,
+    #[cfg_attr(feature = "inspect", inspect(no_edit))]
     pub path: String,
     #[cfg_attr(
         feature = "inspect",
