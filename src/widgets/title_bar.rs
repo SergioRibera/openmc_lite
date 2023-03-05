@@ -1,15 +1,17 @@
 use std::sync::{mpsc::Receiver, Arc, Mutex};
 
 use eframe::egui;
+use egui::{Align, Align2, Button, Color32, FontId, Id, Layout, Sense, Stroke};
 use log::{debug, info};
 use mc_downloader::prelude::DownloaderService;
 
 use crate::{
-    data::{APP_NAME, theme::ThemeType},
+    data::{theme::ThemeType, APP_NAME},
     download_svc::{DownloadProgress, DownloadProgressMessage},
     resources::Icons,
+    settings::LauncherSettings,
     widgets::add_toast,
-    MainState, settings::LauncherSettings,
+    MainState,
 };
 
 use super::IconButton;
@@ -46,8 +48,6 @@ impl TitleBar {
         cfg: &mut LauncherSettings,
         downloader: &mut Option<DownloaderService>,
     ) {
-        use egui::*;
-
         let title_bar_height = 32.0;
         let pb_height = 3.;
         let title_bar_rect = {
@@ -90,22 +90,7 @@ impl TitleBar {
         }
 
         // User Profile
-        ui.allocate_ui_at_rect(title_bar_rect, |ui| {
-            ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
-                ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
-                ui.vertical(|ui| {
-                    ui.label("Sergio Ribera");
-                    ui.label("OFFLINE");
-                });
-                ui.image(self.resources.expand_arrow.id(ui.ctx()), (10., 10.));
-                ui.interact_with_hovered(
-                    ui.max_rect(),
-                    true,
-                    egui::Id::new("profile"),
-                    egui::Sense::hover(),
-                );
-            });
-        });
+        self.show_profile(title_bar_rect, ui, cfg);
 
         // Windows Controlls
         ui.allocate_ui_at_rect(title_bar_rect, |ui| {
@@ -160,7 +145,7 @@ impl TitleBar {
             }
         }
         if self.start_download {
-           while let Ok(msg) = self.progress_rcv.try_recv() {
+            while let Ok(msg) = self.progress_rcv.try_recv() {
                 match msg {
                     DownloadProgressMessage::Setup(_) => add_toast(
                         &mut state.toasts,
@@ -195,10 +180,43 @@ impl TitleBar {
             ThemeType::Custom(_) => (&self.resources.light_mode, ThemeType::Light),
         };
 
-        let toggle_btn = ui.add_sized((24., 24.), IconButton::new(icon)).on_hover_text("Toggle Theme");
+        let toggle_btn = ui
+            .add_sized((24., 24.), IconButton::new(icon))
+            .on_hover_text("Toggle Theme");
         if toggle_btn.clicked() {
             cfg.theme = new_theme;
             cfg.save();
         }
+    }
+
+    pub fn show_profile(&self, rect: egui::Rect, ui: &mut egui::Ui, cfg: &mut LauncherSettings) {
+        ui.allocate_ui_at_rect(rect, |ui| {
+            let resp = ui
+                .with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
+                    ui.vertical(|ui| {
+                        ui.label(cfg.session.name.clone());
+                        ui.label(cfg.session.account_origin());
+                    });
+                    ui.image(self.resources.expand_arrow.id(ui.ctx()), (10., 10.));
+                })
+                .response
+                .on_hover_cursor(egui::CursorIcon::PointingHand);
+
+            if resp.hovered() {
+                egui::containers::popup_below_widget(
+                    ui,
+                    egui::Id::new("session_id"),
+                    &resp,
+                    |ui| {
+                        let _ = ui.button("Change Name");
+                        if !cfg.session.is_logged() {
+                            let _ = ui.button("Login");
+                        }
+                        ui.add_enabled(cfg.session.is_logged(), Button::new("Close Sesion"));
+                    },
+                );
+            }
+        });
     }
 }

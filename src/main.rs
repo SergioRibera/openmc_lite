@@ -13,6 +13,9 @@ use screens::{tab_buttons, CreateInstance, ViewType};
 use settings::LauncherSettings;
 use widgets::{open_file_dialog, TitleBar};
 
+#[cfg(feature = "inspect")]
+use egui_inspect::EguiInspect;
+
 use mc_downloader::prelude::{ClientDownloader, DownloaderService};
 
 fn main() -> Result<(), eframe::Error> {
@@ -93,8 +96,25 @@ impl MainApplication {
 impl eframe::App for MainApplication {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
         eframe::egui::CentralPanel::default().show(ctx, |ui| {
-            #[cfg(debug_assertions)]
-            openmc_lite::stats::show_windows(ctx, &self.state, &mut self.launcher_config);
+            #[cfg(feature = "inspect")]
+            egui::Window::new("(Debug) Stats")
+                .title_bar(true)
+                .movable(true)
+                .resizable(true)
+                .collapsible(true)
+                .default_open(false)
+                .default_pos(ui.max_rect().center())
+                .show(ctx, |ui| {
+                    ui.vertical(|ui| {
+                        ui.collapsing("State", |ui| {
+                            self.state.inspect_mut("App State", ui);
+                        });
+
+                        ui.collapsing("Launcher Settings", |ui| {
+                            self.launcher_config.inspect_mut("Settings", ui);
+                        });
+                    });
+                });
 
             ui.vertical(|ui| {
                 self.titlebar.draw_title_bar_ui(

@@ -8,6 +8,10 @@ opt-level = "z" # Optimize for size.
 strip = true    # Automatically strip symbols from the binary.
 lto = true
 
+[features]
+default = []
+inspect = ["egui_inspect"]
+
 [dependencies]
 # Minecraft
 mc_bootstrap = { git = "https://github.com/sergioribera/minecraft_bootstrap", branch = "main" }
@@ -15,10 +19,11 @@ mc_downloader = { git = "https://github.com/sergioribera/openmc_downloader", bra
 
 # GUI
 eframe = "0.21.3"
-egui = { version = "0.21", features = ["serde"]}
+egui = { version = "0.21", features = ["serde"] }
 egui_extras = { version = "0.21.0", features = ["svg", "image"] }
 egui-stylist = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
 egui-theme = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
+egui_inspect = { git = "https://github.com/SergioRibera/egui_inspect", rev = "3ecd2aa", optional = true }
 image = { version = "0.24", default-features = false, features = [
     "png",
     "jpeg",
@@ -32,6 +37,7 @@ env_logger = "0.10.0"
 log = "0.4.17"
 
 # Launcher Configs
+names = { version = "0.14.0", default-features = false }
 app_dirs = { package = "app_dirs2", version = "2.5.4" }
 preferences = { git = "https://github.com/SergioRibera/preferences-rs", branch = "main", features = [
     "security",

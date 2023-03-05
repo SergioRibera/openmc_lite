@@ -6,6 +6,11 @@ use egui_stylist::StylistState;
 use log::debug;
 use serde::{de::Visitor, Deserialize, Serialize};
 
+#[cfg(feature = "inspect")]
+use egui::Color32;
+#[cfg(feature = "inspect")]
+use egui_inspect::EguiInspect;
+
 use crate::data::APP_INFO;
 
 #[derive(Default, Clone, PartialEq)]
@@ -52,6 +57,23 @@ impl Debug for ThemeType {
             Self::Dark => write!(f, "Dark"),
             Self::Custom((name, _)) => f.debug_tuple("Custom").field(name).finish(),
         }
+    }
+}
+
+#[cfg(feature = "inspect")]
+impl EguiInspect for ThemeType {
+    fn inspect(&self, label: &'static str, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.label(format!("{:?}", self));
+        });
+    }
+    fn inspect_mut(&mut self, label: &'static str, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.colored_label(Color32::from_rgb(255, 0, 0), format!("{:?}", self))
+                .on_hover_text("inspect_mut is not implemented for ThemeType");
+        });
     }
 }
 

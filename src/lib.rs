@@ -6,15 +6,17 @@ pub mod screens;
 pub mod settings;
 pub mod widgets;
 
-#[cfg(debug_assertions)]
-pub mod stats;
+#[cfg(feature = "inspect")]
+use egui_inspect::EguiInspect;
 
 use egui_toast::Toasts;
 use widgets::create_toast;
 
+#[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct MainState {
     pub sub_title: String,
     pub create_instance: bool,
+    #[cfg_attr(feature = "inspect", inspect(hide))]
     pub toasts: Toasts,
 }
 

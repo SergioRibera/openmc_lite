@@ -9,16 +9,79 @@ use log::{debug, info, trace};
 use mc_downloader::launcher_manifest::LauncherManifestVersion;
 use serde::{Deserialize, Serialize};
 
+#[cfg(feature = "inspect")]
+use egui::Color32;
+#[cfg(feature = "inspect")]
+use egui_inspect::EguiInspect;
+
 mod load;
 mod save;
 
 pub use load::load_settings;
 pub use save::save_settings;
 
+#[derive(Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "inspect", derive(EguiInspect))]
+pub struct UserSession {
+    pub name: String,
+    pub uuid: String,
+    pub access_token: String,
+    #[cfg_attr(feature = "inspect", inspect(hide))]
+    pub origin: String,
+}
+
+impl Default for UserSession {
+    fn default() -> Self {
+        let d = "null";
+        let name = {
+            let n = names::Generator::default().next().unwrap();
+            let sp = n.split('-').collect::<Vec<&str>>();
+            sp.iter()
+                .map(|s| {
+                    let mut chars = s.chars();
+                    format!(
+                        "{}{}",
+                        chars.nth(0).unwrap().to_uppercase(),
+                        chars
+                            .map(|c| c.to_string())
+                            .collect::<Vec<String>>()
+                            .join("")
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join(" ")
+        };
+        Self {
+            name,
+            origin: String::new(),
+            uuid: d.to_string(),
+            access_token: d.to_string(),
+        }
+    }
+}
+
+impl UserSession {
+    pub fn is_logged(&self) -> bool {
+        let d = "null";
+        !self.name.is_empty() && self.uuid != d.to_string() && self.access_token != d.to_string()
+    }
+
+    pub fn account_origin(&self) -> String {
+        if self.origin.is_empty() || !self.is_logged() {
+            return String::from("LOCAL");
+        }
+        self.origin.clone()
+    }
+}
+
 // Data to save and load into preferences
 #[derive(Default, Serialize, Deserialize, Clone)]
+#[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct LauncherSettings {
     pub theme: ThemeType,
+    #[serde(default)]
+    pub session: UserSession,
+    #[cfg_attr(feature = "inspect", inspect(hide, custom_func_mut = "custom_instance_inspect"))]
     pub last_launched: Option<LauncherInstance>,
     pub instances: Vec<LauncherInstance>,
     #[serde(skip)]
@@ -27,9 +90,14 @@ pub struct LauncherSettings {
 
 // Data of instance
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct LauncherInstance {
     pub name: String,
     pub path: String,
+    #[cfg_attr(
+        feature = "inspect",
+        inspect(hide, custom_func_mut = "custom_mc_version_inspect")
+    )]
     pub version: Option<MinecraftVersion>,
     pub downloaded: bool,
     #[serde(skip)]
@@ -191,5 +259,54 @@ fn remove_instance_folder(name: &str) {
 
     if dir.exists() && dir.is_dir() {
         std::fs::remove_dir_all(dir).unwrap();
+    }
+}
+
+#[cfg(feature = "inspect")]
+impl EguiInspect for MinecraftVersion {
+    fn inspect(&self, label: &'static str, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.label(self.to_string());
+        });
+    }
+    fn inspect_mut(&mut self, label: &'static str, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.colored_label(Color32::from_rgb(255, 0, 0), self.to_string())
+                .on_hover_text("inspect_mut is not implemented for MinecraftVersion");
+        });
+    }
+}
+
+#[cfg(feature = "inspect")]
+fn custom_instance_inspect(
+    value: &mut Option<LauncherInstance>,
+    label: &'static str,
+    ui: &mut egui::Ui,
+) {
+    if let Some(v) = value {
+        v.inspect_mut(label, ui);
+    } else {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.label("None");
+        });
+    }
+}
+
+#[cfg(feature = "inspect")]
+fn custom_mc_version_inspect(
+    value: &mut Option<MinecraftVersion>,
+    label: &'static str,
+    ui: &mut egui::Ui,
+) {
+    if let Some(v) = value {
+        v.inspect_mut(label, ui);
+    } else {
+        ui.horizontal(|ui| {
+            ui.label(label.to_owned() + ":");
+            ui.label("None");
+        });
     }
 }
