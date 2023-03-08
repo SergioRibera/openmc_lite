@@ -12,6 +12,11 @@ use egui_inspect::EguiInspect;
 use egui_toast::Toasts;
 use widgets::{create_toast, Modal, ModalBuilder};
 
+#[macro_use]
+extern crate litcrypt;
+
+use_litcrypt!();
+
 pub static MODAL_ID: &'static str = "__openmc__modal";
 
 #[cfg_attr(feature = "inspect", derive(EguiInspect))]

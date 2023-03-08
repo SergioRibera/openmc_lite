@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use litcrypt::lc;
+use once_cell::sync::Lazy;
 use std::path::PathBuf;
 
 pub mod theme;
@@ -11,7 +13,7 @@ pub static APP_INFO: app_dirs::AppInfo = app_dirs::AppInfo {
     author: "SergioRibera",
 };
 
-pub static OPENMC_SECURE_KEY: &str = env!("OPENMC_ENCRYPT_KEY");
+pub static OPENMC_SECURE_KEY: Lazy<String> = Lazy::new(|| lc!(env!("OPENMC_ENCRYPT_KEY")));
 
 // on linux: ~/.config/{app_info.name}/{path}
 /// This function only works with folders

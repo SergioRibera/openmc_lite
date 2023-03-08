@@ -5,7 +5,7 @@ use preferences::security::{SecurePreferences, SecurityManager};
 use crate::data::{config_path, OPENMC_SECURE_KEY};
 
 pub fn load_settings<A: SecurePreferences + Default>(file_name: &str) -> A {
-    let manager = SecurityManager::new(OPENMC_SECURE_KEY, None);
+    let manager = SecurityManager::new(&OPENMC_SECURE_KEY, None);
     let mut conf_dir = config_path("");
     conf_dir.push(file_name);
     if conf_dir.exists() {
