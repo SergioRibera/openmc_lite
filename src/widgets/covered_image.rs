@@ -1,20 +1,16 @@
-use egui::{Color32, Pos2, Rect, Vec2};
+use egui::{Color32, Pos2, Rect};
 use egui_extras::RetainedImage;
 
-pub struct CoveredImage;
+use super::{calculate_ratio_size, CoveredRatioType};
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum CoveredImageType {
-    Cover,
-    Container,
-}
+pub struct CoveredImage;
 
 impl CoveredImage {
     pub fn show(
         ui: &mut egui::Ui,
         image: &RetainedImage,
         container_rect: Rect,
-        t: CoveredImageType,
+        t: CoveredRatioType,
         tint: Option<Color32>,
     ) {
         if !ui.is_rect_visible(container_rect) {
@@ -22,18 +18,10 @@ impl CoveredImage {
         }
         let painter = ui.painter();
         let image_size = image.size_vec2();
-        let w_ratio = container_rect.width() / image_size.x;
-        let h_ratio = container_rect.height() / image_size.y;
-
-        let ratio = if t == CoveredImageType::Cover {
-            w_ratio.max(h_ratio)
-        } else {
-            w_ratio.min(h_ratio)
-        };
 
         let new_rect = Rect::from_center_size(
             container_rect.center(),
-            Vec2::new(image_size.x * ratio, image_size.y * ratio),
+            calculate_ratio_size(image_size, container_rect.size(), t),
         );
         let uv = Rect::from_min_max(Pos2::ZERO, Pos2::new(1., 1.));
 
