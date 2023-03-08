@@ -10,7 +10,9 @@ pub mod widgets;
 use egui_inspect::EguiInspect;
 
 use egui_toast::Toasts;
-use widgets::create_toast;
+use widgets::{create_toast, Modal, ModalBuilder};
+
+pub static MODAL_ID: &'static str = "__openmc__modal";
 
 #[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct MainState {
@@ -18,6 +20,8 @@ pub struct MainState {
     pub create_instance: bool,
     #[cfg_attr(feature = "inspect", inspect(hide))]
     pub toasts: Toasts,
+    #[cfg_attr(feature = "inspect", inspect(hide))]
+    pub modal: Modal,
 }
 
 impl Default for MainState {
@@ -26,6 +30,10 @@ impl Default for MainState {
             sub_title: Default::default(),
             create_instance: false,
             toasts: create_toast(),
+            modal: ModalBuilder::default()
+                .set_id(MODAL_ID)
+                .set_size_percent((0.6, 0.6))
+                .build(),
         }
     }
 }
