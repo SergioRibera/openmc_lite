@@ -24,6 +24,8 @@ pub use save::save_settings;
 #[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct UserSession {
     pub name: String,
+    #[serde(default)]
+    pub face_img: String,
     pub uuid: String,
     pub access_token: String,
     #[cfg_attr(feature = "inspect", inspect(hide))]
@@ -54,6 +56,7 @@ impl Default for UserSession {
         Self {
             name,
             origin: String::new(),
+            face_img: String::new(),
             uuid: d.to_string(),
             access_token: d.to_string(),
         }
@@ -281,6 +284,7 @@ impl EguiInspect for MinecraftVersion {
     }
 }
 
+#[allow(unused)]
 #[cfg(feature = "inspect")]
 fn custom_instance_inspect(
     value: &mut Option<LauncherInstance>,
@@ -297,6 +301,7 @@ fn custom_instance_inspect(
     }
 }
 
+#[allow(unused)]
 #[cfg(feature = "inspect")]
 fn custom_mc_version_inspect(
     value: &mut Option<MinecraftVersion>,
