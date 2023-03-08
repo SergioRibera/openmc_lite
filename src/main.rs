@@ -5,7 +5,7 @@ use download_svc::create_icons_svc;
 use egui_stylist::StylistState;
 use openmc_lite::{
     data, download_svc, resources,
-    screens::{self, Instances},
+    screens::{self, AccountType, Instances},
     settings, widgets, MainState,
 };
 use resources::ResourceLoader;
@@ -95,7 +95,7 @@ impl MainApplication {
 
 impl eframe::App for MainApplication {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
-        eframe::egui::CentralPanel::default().show(ctx, |ui| {
+        widgets::CentralPanel::default().show(ctx, |ui| {
             #[cfg(feature = "inspect")]
             egui::Window::new("(Debug) Stats")
                 .title_bar(true)
@@ -125,7 +125,7 @@ impl eframe::App for MainApplication {
                     &mut self.launcher_config,
                     &mut self.downloader,
                 );
-                ui.add_space(20.);
+                ui.add_space(10.);
                 if !self.state.create_instance {
                     tab_buttons(ui, &mut self.curr_view);
                     ui.add_space(10.);
@@ -140,7 +140,6 @@ impl eframe::App for MainApplication {
                         ViewType::Preferences => {
                             screens::preferences(ui, &mut self.theme, &mut self.launcher_config)
                         }
-                        _ => (),
                     }
                 } else {
                     self.state.sub_title = "Create Instance".to_string();
@@ -151,6 +150,22 @@ impl eframe::App for MainApplication {
                         &mut self.state,
                     );
                 }
+            });
+            let modal = self.state.modal.clone();
+            modal.show(ui, |ui| {
+                let account_type = if self.launcher_config.session.is_logged() {
+                    Some(AccountType::from(
+                        self.launcher_config.session.account_origin(),
+                    ))
+                } else {
+                    None
+                };
+                screens::Account::new(account_type).show(
+                    ui,
+                    &self.resources,
+                    &mut self.state,
+                    &mut self.launcher_config,
+                );
             });
             // Toasts/Notification Area
             self.state.toasts.show(ctx);
