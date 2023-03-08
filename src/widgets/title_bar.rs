@@ -1,7 +1,7 @@
 use std::sync::{mpsc::Receiver, Arc, Mutex};
 
 use eframe::egui;
-use egui::{Align, Align2, Button, Color32, FontId, Id, Layout, Sense, Stroke};
+use egui::{Align, Align2, Color32, FontId, Id, Layout, Sense, Stroke};
 use log::{debug, info};
 use mc_downloader::prelude::DownloaderService;
 
@@ -90,7 +90,7 @@ impl TitleBar {
         }
 
         // User Profile
-        self.show_profile(title_bar_rect, ui, cfg);
+        self.show_profile(title_bar_rect, ui, cfg, state);
 
         // Windows Controlls
         ui.allocate_ui_at_rect(title_bar_rect, |ui| {
@@ -190,10 +190,17 @@ impl TitleBar {
         }
     }
 
-    pub fn show_profile(&self, rect: egui::Rect, ui: &mut egui::Ui, cfg: &mut LauncherSettings) {
+    pub fn show_profile(
+        &self,
+        rect: egui::Rect,
+        ui: &mut egui::Ui,
+        cfg: &mut LauncherSettings,
+        state: &mut MainState,
+    ) {
         ui.allocate_ui_at_rect(rect, |ui| {
             let resp = ui
                 .with_layout(Layout::left_to_right(Align::Center), |ui| {
+                    ui.add_space(10.);
                     ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
                     ui.vertical(|ui| {
                         ui.label(cfg.session.name.clone());
@@ -201,22 +208,15 @@ impl TitleBar {
                     });
                     ui.image(self.resources.expand_arrow.id(ui.ctx()), (10., 10.));
                 })
-                .response
-                .on_hover_cursor(egui::CursorIcon::PointingHand);
+                .response;
+            let resp = ui
+                .interact(resp.rect, Id::new("__openmc__tabtitle"), Sense::click())
+                .on_hover_cursor(egui::CursorIcon::PointingHand)
+                .on_hover_text_at_pointer("Profile Settings");
 
-            if resp.hovered() {
-                egui::containers::popup_below_widget(
-                    ui,
-                    egui::Id::new("session_id"),
-                    &resp,
-                    |ui| {
-                        let _ = ui.button("Change Name");
-                        if !cfg.session.is_logged() {
-                            let _ = ui.button("Login");
-                        }
-                        ui.add_enabled(cfg.session.is_logged(), Button::new("Close Sesion"));
-                    },
-                );
+            if resp.clicked() {
+                info!("Profile clicked!");
+                state.modal.open_modal(ui);
             }
         });
     }
