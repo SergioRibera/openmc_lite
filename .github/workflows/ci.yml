@@ -74,9 +74,9 @@ jobs:
           key: ${{ runner.os }}-cargo-clippy-${{ hashFiles('**/Cargo.toml') }}
       - uses: dsherret/rust-toolchain-file@v1
       - name: Run clippy
-        uses: actions-rs/clippy-check@v1
+        uses: actions-rs/cargo@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          command: clippy
           args: -- -D warnings
 
   # Run cargo fmt --all -- --check
