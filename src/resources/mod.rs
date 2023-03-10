@@ -11,6 +11,9 @@ pub use icon_loader::Icons;
 pub struct ResourceLoader {
     pub home_bg: RetainedImage,
     pub btn_bg: RetainedImage,
+    pub mc_btn: RetainedImage, // Minecraft
+    pub ms_btn: RetainedImage, // Microsoft
+    pub lc_btn: RetainedImage, // Local
     // theme: Theme,
 }
 
@@ -24,7 +27,22 @@ impl Default for ResourceLoader {
             .unwrap(),
             btn_bg: RetainedImage::from_image_bytes(
                 "play_button_background",
-                include_bytes!("../../assets/play_btn_bg.png"),
+                include_bytes!("../../assets/buttons/play_btn_bg.png"),
+            )
+            .unwrap(),
+            mc_btn: RetainedImage::from_image_bytes(
+                "play_button_background",
+                include_bytes!("../../assets/buttons/mc_account_btn.png"),
+            )
+            .unwrap(),
+            ms_btn: RetainedImage::from_image_bytes(
+                "play_button_background",
+                include_bytes!("../../assets/buttons/mj_account_btn.png"),
+            )
+            .unwrap(),
+            lc_btn: RetainedImage::from_image_bytes(
+                "play_button_background",
+                include_bytes!("../../assets/buttons/lc_account_btn.png"),
             )
             .unwrap(),
         }

@@ -1,4 +1,4 @@
-use egui::{Color32, Image, Rect, Sense, Widget, Vec2, TextureId};
+use egui::{Color32, Image, Rect, Sense, TextureId, Vec2, Widget};
 
 pub struct ImageButton {
     image: Image,
@@ -16,7 +16,7 @@ impl ImageButton {
             enabled: true,
             sense: Sense::click(),
             hover_color: Color32::from_gray(120),
-            disable_color: Color32::from_gray(220),
+            disable_color: Color32::from_gray(180),
             click_color: Color32::from_gray(220),
         }
     }
@@ -70,9 +70,7 @@ impl Widget for ImageButton {
         let (rect, response) = ui.allocate_exact_size(size, sense);
 
         if ui.is_rect_visible(rect) {
-            let image_rect = ui
-                .layout()
-                .align_size_within_rect(size, rect);
+            let image_rect = ui.layout().align_size_within_rect(size, rect);
 
             let color = if !enabled || !ui.is_enabled() {
                 disable_color
@@ -87,6 +85,10 @@ impl Widget for ImageButton {
             image.tint(color).paint_at(ui, image_rect);
         }
 
-        response.on_hover_cursor(egui::CursorIcon::PointingHand)
+        if enabled {
+            response.on_hover_cursor(egui::CursorIcon::PointingHand)
+        } else {
+            response
+        }
     }
 }
