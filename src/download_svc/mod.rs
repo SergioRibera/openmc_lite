@@ -1,10 +1,29 @@
+mod faces;
 mod icons;
 
 use std::sync::mpsc::{Receiver, SyncSender};
 
+pub use faces::*;
 pub use icons::*;
 use log::info;
-use mc_downloader::prelude::Reporter;
+use mc_downloader::prelude::{DownloaderService, Reporter};
+
+use crate::data::config_path;
+
+pub fn download_extra_resources() -> DownloaderService {
+    let cfg_path = config_path("");
+    let icons = create_downloads_icons();
+    let faces = create_faces_downloads();
+
+    let downloads = [icons, faces].concat();
+
+    info!("Files to Download: {}", downloads.len());
+
+    DownloaderService::new(cfg_path.to_str().unwrap())
+        .with_downloads(downloads)
+        .with_parallel_requests(50)
+        .to_owned()
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DownloadProgressMessage {
@@ -47,8 +66,7 @@ impl Reporter for DownloadProgress {
         self.curr_progress += current;
         info!(
             "Setup progress\nIncoming: {current}\nCurrent: {}\nMax: {}",
-            self.curr_progress,
-            self.max_progress
+            self.curr_progress, self.max_progress
         );
         if current > 0 {
             self.sender

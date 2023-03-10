@@ -1,11 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use data::APP_NAME;
-use download_svc::create_icons_svc;
 use egui_stylist::StylistState;
 use openmc_lite::{
-    data, download_svc, resources,
-    screens::{self, AccountType, Instances},
+    data, download_svc::download_extra_resources, resources,
+    screens::{self, Account, AccountType, Instances},
     settings, widgets, MainState,
 };
 use resources::ResourceLoader;
@@ -56,6 +55,7 @@ pub struct MainApplication {
     theme: StylistState,
     titlebar: TitleBar,
     curr_view: ViewType,
+    account_view: Account,
     instances_widget: Instances,
     create_widget: CreateInstance,
     downloader: Option<DownloaderService>,
@@ -69,18 +69,29 @@ impl MainApplication {
         theme.set_file_dialog_function(Box::new(open_file_dialog));
         log::debug!("Theme Loaded {:?}", launcher_config.theme);
 
+        let account_view = {
+            let account_type = if launcher_config.session.is_logged() {
+                Some(AccountType::from(
+                    launcher_config.session.account_origin(),
+                ))
+            } else {
+                None
+            };
+            Account::new(account_type, &launcher_config)
+        };
         let mc = ClientDownloader::new().unwrap();
 
         Self {
             launcher_config: launcher_config.clone(),
             theme,
+            account_view,
             state: MainState::default(),
             resources: ResourceLoader::default(),
             instances_widget: Instances::default(),
             create_widget: CreateInstance::new(&mc),
-            titlebar: TitleBar::default(),
-            downloader: if !launcher_config.exists_icons {
-                Some(create_icons_svc())
+            titlebar: TitleBar::new(&launcher_config),
+            downloader: if !launcher_config.exists_assets {
+                Some(download_extra_resources())
             } else {
                 None
             },
@@ -95,6 +106,8 @@ impl MainApplication {
 
 impl eframe::App for MainApplication {
     fn update(&mut self, ctx: &eframe::egui::Context, frame: &mut eframe::Frame) {
+        #[cfg(feature = "debug_ui")]
+        ctx.set_debug_on_hover(true);
         widgets::CentralPanel::default().show(ctx, |ui| {
             #[cfg(feature = "inspect")]
             egui::Window::new("(Debug) Stats")
@@ -153,14 +166,7 @@ impl eframe::App for MainApplication {
             });
             let modal = self.state.modal.clone();
             modal.show(ui, |ui| {
-                let account_type = if self.launcher_config.session.is_logged() {
-                    Some(AccountType::from(
-                        self.launcher_config.session.account_origin(),
-                    ))
-                } else {
-                    None
-                };
-                screens::Account::new(account_type).show(
+                self.account_view.show(
                     ui,
                     &self.resources,
                     &mut self.state,
