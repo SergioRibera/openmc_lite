@@ -17,6 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OPENMC_ENCRYPT_KEY: ${{ secrets.OPENMC_ENCRYPT_KEY }}
+      LITCRYPT_ENCRYPT_KEY: ${{ secrets.LITCRYPT_ENCRYPT_KEY }}
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
