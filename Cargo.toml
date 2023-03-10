@@ -15,8 +15,8 @@ inspect = ["egui_inspect"]
 
 [dependencies]
 # Minecraft
-mc_bootstrap = { git = "https://github.com/sergioribera/minecraft_bootstrap", branch = "main" }
-mc_downloader = { git = "https://github.com/sergioribera/openmc_downloader", branch = "simple_refactor"}
+mc_bootstrap = { git = "https://github.com/SergioRibera/minecraft_bootstrap", branch = "main" }
+mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", branch = "simple_refactor"}
 
 # GUI
 eframe = "0.21.3"
