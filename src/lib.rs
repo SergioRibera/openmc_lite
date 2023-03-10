@@ -23,6 +23,7 @@ pub static MODAL_ID: &'static str = "__openmc__modal";
 pub struct MainState {
     pub sub_title: String,
     pub create_instance: bool,
+    pub changed_face: bool,
     #[cfg_attr(feature = "inspect", inspect(hide))]
     pub toasts: Toasts,
     #[cfg_attr(feature = "inspect", inspect(hide))]
@@ -34,6 +35,7 @@ impl Default for MainState {
         Self {
             sub_title: Default::default(),
             create_instance: false,
+            changed_face: false,
             toasts: create_toast(),
             modal: ModalBuilder::default()
                 .set_id(MODAL_ID)

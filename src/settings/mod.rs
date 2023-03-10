@@ -55,7 +55,7 @@ impl Default for UserSession {
         };
         Self {
             name,
-            origin: String::new(),
+            origin: "LOCAL".to_string(),
             face_img: String::new(),
             uuid: d.to_string(),
             access_token: d.to_string(),
@@ -66,7 +66,13 @@ impl Default for UserSession {
 impl UserSession {
     pub fn is_logged(&self) -> bool {
         let d = "null";
-        !self.name.is_empty() && self.uuid != d.to_string() && self.access_token != d.to_string()
+        // check local
+        self.origin == "LOCAL".to_string() && !self.name.is_empty()
+            || self.origin.is_empty() && !self.name.is_empty()
+            // check remote
+            || !self.name.is_empty()
+                && self.uuid != d.to_string()
+                && self.access_token != d.to_string()
     }
 
     pub fn account_origin(&self) -> String {
@@ -84,11 +90,14 @@ pub struct LauncherSettings {
     pub theme: ThemeType,
     #[serde(default)]
     pub session: UserSession,
-    #[cfg_attr(feature = "inspect", inspect(hide, custom_func_mut = "custom_instance_inspect"))]
+    #[cfg_attr(
+        feature = "inspect",
+        inspect(hide, custom_func_mut = "custom_instance_inspect")
+    )]
     pub last_launched: Option<LauncherInstance>,
     pub instances: Vec<LauncherInstance>,
     #[serde(skip)]
-    pub exists_icons: bool,
+    pub exists_assets: bool,
 }
 
 // Data of instance
@@ -138,14 +147,22 @@ impl LauncherSettings {
             }
         }
 
-        let p = config_path("icons");
-        cfg.exists_icons = p.is_dir() && p.read_dir().unwrap().count() > 1;
+        cfg.check_assets();
 
         if let Some(t) = opts.theme {
             cfg.theme = t;
         }
 
         cfg
+    }
+
+    pub fn check_assets(&mut self) {
+        let p_icons = config_path("icons");
+        let p_faces = config_path("faces");
+        self.exists_assets = p_icons.is_dir()
+            && p_icons.read_dir().unwrap().count() > 1
+            && p_faces.is_dir()
+            && p_faces.read_dir().unwrap().count() > 1;
     }
 
     pub fn add_instance(

@@ -2,6 +2,7 @@ use std::sync::{mpsc::Receiver, Arc, Mutex};
 
 use eframe::egui;
 use egui::{Align, Align2, Color32, FontId, Id, Layout, Sense, Stroke};
+use egui_extras::RetainedImage;
 use log::{debug, info};
 use mc_downloader::prelude::DownloaderService;
 
@@ -18,27 +19,32 @@ use super::IconButton;
 
 pub struct TitleBar {
     resources: Icons,
+    face: Option<RetainedImage>,
     start_download: bool,
     curr_progress: f32,
     progress: DownloadProgress,
     progress_rcv: Receiver<DownloadProgressMessage>,
 }
 
-impl Default for TitleBar {
-    fn default() -> Self {
+impl TitleBar {
+    pub fn new(cfg: &LauncherSettings) -> Self {
         let (progress, progress_rcv) = DownloadProgress::new();
 
         Self {
             progress,
             progress_rcv,
+            face: if cfg.session.face_img.is_empty() {
+                None
+            } else {
+                let image_bytes = std::fs::read(cfg.session.face_img.clone()).unwrap();
+                Some(RetainedImage::from_image_bytes("face_title_bar", &image_bytes).unwrap())
+            },
             curr_progress: 0.,
             start_download: false,
             resources: Icons::preload().unwrap(),
         }
     }
-}
 
-impl TitleBar {
     pub fn draw_title_bar_ui(
         &mut self,
         ui: &mut egui::Ui,
@@ -52,13 +58,13 @@ impl TitleBar {
         let pb_height = 3.;
         let title_bar_rect = {
             let mut rect = app_rect;
-            rect.max.y = rect.min.y + title_bar_height;
+            rect.max.y = rect.min.y + title_bar_height + pb_height + 5.;
             rect
         };
 
         let mut pb_rect = title_bar_rect;
-        pb_rect.min.y = pb_rect.max.y + 5.;
-        pb_rect.max.y += pb_height;
+        pb_rect.min.y = pb_rect.max.y;
+        // pb_rect.max.y += pb_height;
         let title = if !state.sub_title.is_empty() {
             format!("{APP_NAME} - {}", state.sub_title)
         } else {
@@ -81,6 +87,13 @@ impl TitleBar {
             FontId::proportional(20.0),
             ui.style().visuals.text_color(),
         );
+
+        if state.changed_face {
+            let image_bytes = std::fs::read(cfg.session.face_img.clone()).unwrap();
+            self.face =
+                Some(RetainedImage::from_image_bytes("face_title_bar", &image_bytes).unwrap());
+            state.changed_face = false;
+        }
 
         // Interact with the title bar (drag to move window):
         if title_bar_response.double_clicked() {
@@ -158,6 +171,7 @@ impl TitleBar {
                     DownloadProgressMessage::End => {
                         *downloader = None;
                         self.start_download = false;
+                        cfg.check_assets();
                     }
                 }
                 ui.allocate_ui_at_rect(pb_rect, |ui| {
@@ -169,6 +183,7 @@ impl TitleBar {
                     let mut to = pos;
                     to.x += (self.curr_progress / 1394096.) * max_width;
                     painter.line_segment([pos, to], Stroke::new(1.5, Color32::LIGHT_BLUE));
+                    ui.ctx().request_repaint();
                 });
             }
         }
@@ -201,7 +216,14 @@ impl TitleBar {
             let resp = ui
                 .with_layout(Layout::left_to_right(Align::Center), |ui| {
                     ui.add_space(10.);
-                    ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
+                    if !cfg.session.is_logged()
+                        || cfg.session.face_img.is_empty()
+                        || self.face.is_none()
+                    {
+                        ui.image(self.resources.app.id(ui.ctx()), (32., 32.));
+                    } else {
+                        ui.image(self.face.as_ref().unwrap().texture_id(ui.ctx()), (32., 32.));
+                    }
                     ui.vertical(|ui| {
                         ui.label(cfg.session.name.clone());
                         ui.label(cfg.session.account_origin());
