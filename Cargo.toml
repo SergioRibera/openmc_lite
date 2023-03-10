@@ -3,8 +3,62 @@ name = "openmc_lite"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+opt-level = "z" # Optimize for size.
+strip = true    # Automatically strip symbols from the binary.
+lto = true
+
+[features]
+default = []
+debug_ui = []
+inspect = ["egui_inspect"]
+
 [dependencies]
-druid = "0.7.0"
+# Minecraft
+mc_bootstrap = { git = "https://github.com/SergioRibera/minecraft_bootstrap", branch = "main" }
+mc_downloader = { git = "https://github.com/SergioRibera/openmc_downloader", branch = "simple_refactor"}
+
+# GUI
+eframe = "0.21.3"
+egui = { version = "0.21", features = ["serde"] }
+egui_extras = { version = "0.21.0", features = ["svg", "image"] }
+egui-stylist = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
+egui-theme = { git = "https://github.com/SergioRibera/egui-stylist", rev = "587070c" }
+egui_inspect = { git = "https://github.com/SergioRibera/egui_inspect", rev = "3ecd2aa", optional = true }
+image = { version = "0.24", default-features = false, features = [
+    "png",
+    "jpeg",
+] }
+
+# Errors
+anyhow = "1.0.69"
+
+# Log and Debug
 env_logger = "0.10.0"
 log = "0.4.17"
-tokio = "1.24.2"
+
+# Launcher Configs
+names = { version = "0.14.0", default-features = false }
+app_dirs = { package = "app_dirs2", version = "2.5.4" }
+preferences = { git = "https://github.com/SergioRibera/preferences-rs", branch = "main", features = [
+    "security",
+] }
+serde = "1.0.152"
+serde_derive = "1.0.152"
+toml = "0.7.2"
+
+# Memory and data management
+once_cell = "1.14.0"
+litcrypt = "0.3.0"
+
+# Cli
+clap = { version = "4.1.4", features = [
+    "env",
+    "wrap_help",
+    "derive",
+    "color",
+    "suggestions",
+] }
+rfd = "0.11.1"
+egui-toast = "0.6.0"
+open = "3.2.0"

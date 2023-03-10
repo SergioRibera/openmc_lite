@@ -10,6 +10,9 @@ on:
 
 jobs:
   build:
+    env:
+      OPENMC_ENCRYPT_KEY: ${{ secrets.OPENMC_ENCRYPT_KEY }}
+      LITCRYPT_ENCRYPT_KEY: ${{ secrets.LITCRYPT_ENCRYPT_KEY }}
     strategy:
       fail-fast: false
       matrix:
@@ -33,6 +36,13 @@ jobs:
         uses: actions-rs/toolchain@v1
         with:
           target: ${{ matrix.platform.target }}
+
+      - name: Get if is alpha
+        id: get_prerelease
+        shell: bash
+        run: |
+          if [[ $GITHUB_REF_NAME == *a* ]]; then i=true; else i=false; fi
+          echo "::set-output name=prerelease::${{ toJSON($i) }}"
 
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
@@ -70,4 +80,5 @@ jobs:
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
+          prerelease: ${{ fromJSON(steps.get_prerelease.outputs.prerelease) }}
           files: ${{ env.APP_NAME }}_${{ matrix.platform.target }}${{ matrix.platform.ext }}
