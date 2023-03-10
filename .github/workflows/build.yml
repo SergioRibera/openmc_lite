@@ -32,11 +32,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: install rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          target: ${{ matrix.platform.target }}
-
+      - uses: dsherret/rust-toolchain-file@v1
       - name: Get if is alpha
         id: get_prerelease
         shell: bash
