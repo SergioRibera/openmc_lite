@@ -2,7 +2,7 @@ use mc_downloader::prelude::{DownloadData, DownloaderService};
 
 use crate::data::config_path;
 
-const FACES: [&'static str; 46] = [
+const FACES: [&str; 46] = [
     "https://minecraftfaces.com/wp-content/bigfaces/big-allay-face.png",
     "https://minecraftfaces.com/wp-content/bigfaces/big-axolotl-face.png",
     "https://minecraftfaces.com/wp-content/bigfaces/big-blaze-face.png",
@@ -57,7 +57,7 @@ pub fn create_faces_downloads() -> Vec<DownloadData> {
     FACES
         .iter()
         .map(|d| {
-            let file_name = d.split("/").last().unwrap();
+            let file_name = d.split('/').last().unwrap();
             let mut path = binding.clone();
             path.push(file_name);
             let path = path.to_str().unwrap();

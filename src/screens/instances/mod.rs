@@ -78,9 +78,9 @@ impl Instances {
             let mut reset = false;
             let selected = self.selected.clone().take();
             let mut grid_enabled = true;
-            if selected.is_some() {
+            if let Some(selected) = selected {
                 ui.set_max_width(ui.available_width() - 300.);
-                grid_enabled = !selected.unwrap().downloading;
+                grid_enabled = !selected.downloading;
             } else {
                 ui.set_max_width(ui.available_width());
             }
@@ -101,7 +101,6 @@ impl Instances {
                         if frame_sizes.len() != cfg.instances.len() {
                             frame_sizes.resize(cfg.instances.len(), Vec2::default());
                         }
-                        let i = i.clone();
                         ui.horizontal_centered(|ui| {
                             ui.add_space((ui.available_width() - frame_sizes[i].x) / 2.0);
                             let top_space = (ui.available_height() - frame_sizes[i].y) / 2.0;

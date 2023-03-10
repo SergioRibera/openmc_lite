@@ -43,7 +43,7 @@ impl Default for UserSession {
                     let mut chars = s.chars();
                     format!(
                         "{}{}",
-                        chars.nth(0).unwrap().to_uppercase(),
+                        chars.next().unwrap().to_uppercase(),
                         chars
                             .map(|c| c.to_string())
                             .collect::<Vec<String>>()
@@ -67,12 +67,12 @@ impl UserSession {
     pub fn is_logged(&self) -> bool {
         let d = "null";
         // check local
-        self.origin == "LOCAL".to_string() && !self.name.is_empty()
+        self.origin == *"LOCAL" && !self.name.is_empty()
             || self.origin.is_empty() && !self.name.is_empty()
             // check remote
             || !self.name.is_empty()
-                && self.uuid != d.to_string()
-                && self.access_token != d.to_string()
+                && self.uuid != *d
+                && self.access_token != *d
     }
 
     pub fn account_origin(&self) -> String {

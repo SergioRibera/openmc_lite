@@ -67,27 +67,23 @@ impl CreateInstance {
         let versions = mc.get_list_versions();
 
         let mc_releases = versions
-            .clone()
             .iter()
             .filter(|v| v.version_type == "release")
             .map(|v| v.id.clone())
             .collect();
         let mc_snapshot = versions
-            .clone()
             .iter()
             .clone()
             .filter(|v| &v.version_type == "snapshot")
             .map(|v| v.id.clone())
             .collect();
         let mc_oldbeta = versions
-            .clone()
             .iter()
             .clone()
             .filter(|v| &v.version_type == "old_beta")
             .map(|v| v.id.clone())
             .collect();
         let mc_oldalpha = versions
-            .clone()
             .iter()
             .filter(|v| &v.version_type == "old_alpha")
             .map(|v| v.id.clone())
@@ -97,7 +93,7 @@ impl CreateInstance {
             icons,
             curr_step: 0,
             max_step: STEPS.len() as u8 - 1,
-            steps: Steps::with_steps(STEPS.iter().map(|(n, _, _)| n.clone()).collect()),
+            steps: Steps::with_steps(STEPS.iter().map(|(n, _, _)| *n).collect()),
             grid: GridWrappedBuilder::default()
                 .set_enabled(true)
                 .show_search()
@@ -268,7 +264,7 @@ fn set_icon(data: &mut CreateInstance, theme: &mut StylistState, ui: &mut egui::
             ui,
             Some(|| {
                 if let Some(icon) = select_icon(theme) {
-                    selected.replace(icon.0.clone());
+                    selected.replace(icon.0);
                 }
             }),
             Some(|i: usize, _: &u8, search: &str| {

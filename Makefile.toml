@@ -46,15 +46,11 @@ description = "Check all unit test"
 env_files = [".env.development"]
 command = "cargo"
 args = ["test"]
-dependencies = [
-    "fmt", "clippy"
-]
+dependencies = ["fmt", "clippy"]
 
 [tasks.check]
 description = "Check all issues, format and code quality"
-dependencies = [
-    "fmt", "clippy", "test"
-]
+dependencies = ["fmt", "clippy", "test"]
 
 [tasks.fix-all]
 description = "Try fix all clippy and format issues"
@@ -67,13 +63,11 @@ dependencies = ["fix-fmt", "fix-clippy"]
 [tasks.dev]
 description = "Run binary/lib as dev"
 env_files = [".env.development"]
-script = "cargo watch -c -d 0.1 -s 'mold -run cargo run --features inspect'"
+script = { pre = "cargo clean", main = "cargo watch -c -d 0.1 -s 'mold -run cargo run --features inspect'" }
 
 [tasks.build]
 description = "Generate release binary/lib"
 env_files = [".env"]
-dependencies = [
-    "fmt", "clippy", "test"
-]
+dependencies = ["fmt", "clippy", "test"]
 command = "cargo"
 args = ["build", "--release", "--target", "x86_64-unknown-linux-musl"]

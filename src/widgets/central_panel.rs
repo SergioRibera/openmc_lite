@@ -57,8 +57,6 @@ impl CentralPanel {
         let clip_rect = ctx.screen_rect();
         let mut panel_ui = Ui::new(ctx.clone(), layer_id, id, available_rect, clip_rect);
 
-        let inner_response = self.show_inside_dyn(&mut panel_ui, add_contents);
-
-        inner_response
+        self.show_inside_dyn(&mut panel_ui, add_contents)
     }
 }

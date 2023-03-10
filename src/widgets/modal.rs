@@ -44,8 +44,8 @@ impl ModalBuilder {
     pub fn build(&self) -> Modal {
         Modal {
             id: Id::new(self.id.clone()),
-            layout: self.layout.clone(),
-            size: self.size.clone(),
+            layout: self.layout,
+            size: self.size,
         }
     }
 }

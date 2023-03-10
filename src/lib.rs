@@ -17,7 +17,7 @@ extern crate litcrypt;
 
 use_litcrypt!();
 
-pub static MODAL_ID: &'static str = "__openmc__modal";
+pub static MODAL_ID: &str = "__openmc__modal";
 
 #[cfg_attr(feature = "inspect", derive(EguiInspect))]
 pub struct MainState {

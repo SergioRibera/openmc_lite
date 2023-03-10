@@ -77,7 +77,7 @@ where
             enabled: self.enabled,
             show_search: self.show_search || self.total_items.len() > 20,
             button_str: self.button_str.clone(),
-            cell_size: self.cell_size.clone(),
+            cell_size: self.cell_size,
             total_items: self.total_items.clone(),
             ..Default::default()
         }
@@ -154,7 +154,7 @@ where
                     ui.horizontal_wrapped(|ui| {
                         if let Some(on_btn_click) = on_btn_click {
                             let (rect, _resp) =
-                                ui.allocate_at_least(self.cell_size.clone().into(), Sense::click());
+                                ui.allocate_at_least(self.cell_size, Sense::click());
 
                             ui.allocate_ui_at_rect(rect, |ui| {
                                 let btn = ui.add_enabled(
@@ -163,7 +163,7 @@ where
                                         RichText::new(self.button_str.clone()).size(20.),
                                     )
                                     .wrap(true)
-                                    .min_size(self.cell_size.clone().into()),
+                                    .min_size(self.cell_size),
                                 );
                                 if btn.clicked() {
                                     on_btn_click();
@@ -173,8 +173,7 @@ where
                         }
 
                         for (i, item) in items.iter().enumerate() {
-                            let (rect, resp) =
-                                ui.allocate_at_least(self.cell_size.clone().into(), Sense::click());
+                            let (rect, resp) = ui.allocate_at_least(self.cell_size, Sense::click());
                             let mut rect_margin = rect;
                             rect_margin.max.x += 5.;
                             rect_margin.max.y += 5.;
@@ -191,10 +190,8 @@ where
 
                             ui.allocate_ui_at_rect(rect_margin, |ui| {
                                 if resp.hovered() && self.enabled {
-                                    if self.selected.is_some() {
-                                        if self.selected.unwrap() == i {
-                                            ui.painter().rect_filled(rect, 5., color);
-                                        }
+                                    if self.selected.is_some() && self.selected.unwrap() == i {
+                                        ui.painter().rect_filled(rect, 5., color);
                                     }
                                     ui.painter().rect_stroke(
                                         rect,
