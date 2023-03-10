@@ -8,7 +8,10 @@ pub struct Steps {
 
 impl Steps {
     pub fn with_steps(steps: Vec<&str>) -> Self {
-        Self { current: 0, steps: steps.iter().map(|s| s.to_string()).collect() }
+        Self {
+            current: 0,
+            steps: steps.iter().map(|s| s.to_string()).collect(),
+        }
     }
 
     pub fn set_steps(&mut self, steps: Vec<&str>) -> &mut Self {

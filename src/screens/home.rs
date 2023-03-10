@@ -34,11 +34,10 @@ pub fn home(ui: &mut Ui, conf: &LauncherSettings, res: &ResourceLoader) {
                     })
                 });
         });
-        let btn_play = ui
-            .add_enabled(
-                !value.is_empty(),
-                ImageButton::new(res.btn_bg.texture_id(ui.ctx()), (250., 80.)),
-            );
+        let btn_play = ui.add_enabled(
+            !value.is_empty(),
+            ImageButton::new(res.btn_bg.texture_id(ui.ctx()), (250., 80.)),
+        );
         if btn_play.clicked() {
             info!("Btn Clicked");
         }

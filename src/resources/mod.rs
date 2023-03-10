@@ -14,7 +14,7 @@ pub struct ResourceLoader {
     pub mc_btn: RetainedImage, // Minecraft
     pub ms_btn: RetainedImage, // Microsoft
     pub lc_btn: RetainedImage, // Local
-    // theme: Theme,
+                               // theme: Theme,
 }
 
 impl Default for ResourceLoader {

@@ -3,7 +3,9 @@
 use data::APP_NAME;
 use egui_stylist::StylistState;
 use openmc_lite::{
-    data, download_svc::download_extra_resources, resources,
+    data,
+    download_svc::download_extra_resources,
+    resources,
     screens::{self, Account, AccountType, Instances},
     settings, widgets, MainState,
 };
@@ -71,9 +73,7 @@ impl MainApplication {
 
         let account_view = {
             let account_type = if launcher_config.session.is_logged() {
-                Some(AccountType::from(
-                    launcher_config.session.account_origin(),
-                ))
+                Some(AccountType::from(launcher_config.session.account_origin()))
             } else {
                 None
             };
