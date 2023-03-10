@@ -71,6 +71,7 @@ script = "cargo watch -c -d 0.1 -s 'mold -run cargo run --features inspect'"
 
 [tasks.build]
 description = "Generate release binary/lib"
+env_files = [".env"]
 dependencies = [
     "fmt", "clippy", "test"
 ]
