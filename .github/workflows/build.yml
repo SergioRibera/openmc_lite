@@ -33,13 +33,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: dsherret/rust-toolchain-file@v1
-      - name: Get if is alpha
-        id: get_prerelease
-        shell: bash
-        run: |
-          if [[ $GITHUB_REF_NAME == *a* ]]; then i=true; else i=false; fi
-          echo "::set-output name=prerelease::${{ toJSON($i) }}"
-
       - name: Get current date
         run: echo "CURRENT_DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
 
@@ -83,5 +76,5 @@ jobs:
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
-          prerelease: ${{ fromJSON(steps.get_prerelease.outputs.prerelease) }}
+          prerelease: ${{ contains(github.ref_name, 'a') }}
           files: ${{ env.APP_NAME }}_${{ matrix.platform.target }}${{ matrix.platform.ext }}
