@@ -1,7 +1,27 @@
 use egui_stylist::{StylistFileDialog, StylistState};
 use log::debug;
+use mc_bootstrap::ClientBootstrap;
 
-use crate::resources::icon::Icon;
+use crate::{
+    data::data_path,
+    resources::icon::Icon,
+    settings::{LauncherInstance, LauncherSettings},
+};
+
+pub fn launch_instance(instance: &LauncherInstance, cfg: &LauncherSettings) {
+    let v = instance.version.clone().unwrap();
+    ClientBootstrap::new(
+        &cfg.session.access_token,
+        data_path("").to_str().unwrap(),
+        &instance.java_path,
+        &cfg.session.name,
+        &cfg.session.uuid,
+        &v.get_version_id(),
+        &v.get_version_type(),
+    )
+    .launch()
+    .unwrap();
+}
 
 pub fn select_icon(state: &mut StylistState) -> Option<(String, Icon)> {
     if let Some(path) = state.file_dialog(StylistFileDialog::Open, Some(("", &["png"]))) {

@@ -106,6 +106,8 @@ pub struct LauncherSettings {
 pub struct LauncherInstance {
     #[cfg_attr(feature = "inspect", inspect(no_edit))]
     pub name: String,
+    #[serde(default)]
+    pub java_path: String,
     #[cfg_attr(feature = "inspect", inspect(no_edit))]
     pub path: String,
     #[cfg_attr(
@@ -163,6 +165,12 @@ impl LauncherSettings {
             && p_icons.read_dir().unwrap().count() > 1
             && p_faces.is_dir()
             && p_faces.read_dir().unwrap().count() > 1;
+    }
+
+    pub fn allocate_java(&self, _version: &str) -> String {
+        // @TODO: allocate java binary on download java folder
+        // if not exists automatic download and store into java folder
+        todo!();
     }
 
     pub fn add_instance(

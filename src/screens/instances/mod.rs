@@ -13,7 +13,6 @@ use egui::{Button, Color32, Layout, RichText, SidePanel, Vec2};
 use egui_extras::image::FitTo;
 use egui_toast::Toasts;
 use log::{debug, info};
-use mc_bootstrap::ClientBootstrap;
 use mc_downloader::prelude::{ClientDownloader, DownloadVersion};
 
 use crate::{
@@ -24,6 +23,8 @@ use crate::{
     widgets::{add_toast, GridWrapped, GridWrappedBuilder, IconButton, ProgressButton},
     MainState,
 };
+
+use self::utils::launch_instance;
 
 pub struct Instances {
     selected: RefCell<Option<LauncherInstance>>,
@@ -279,18 +280,7 @@ impl Instances {
                         self.download_button.set_text("Downloading...");
                     }
                     if mut_instance.downloaded {
-                        let v = mut_instance.version.clone().unwrap();
-                        ClientBootstrap::new(
-                            "null",
-                            data_path("").to_str().unwrap(),
-                            "/usr/lib/jvm/java-8-openjdk/bin/java",
-                            "SergioRibera",
-                            "null",
-                            &v.get_version_id(),
-                            &v.get_version_type(),
-                        )
-                        .launch()
-                        .unwrap();
+                        launch_instance(mut_instance, cfg);
                     }
                 }
             });

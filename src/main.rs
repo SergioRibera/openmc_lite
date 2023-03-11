@@ -143,7 +143,9 @@ impl eframe::App for MainApplication {
                     tab_buttons(ui, &mut self.curr_view);
                     ui.add_space(10.);
                     match self.curr_view {
-                        ViewType::Home => screens::home(ui, &self.launcher_config, &self.resources),
+                        ViewType::Home => {
+                            screens::home(ui, &mut self.launcher_config, &self.resources)
+                        }
                         ViewType::Instances => self.instances_widget.show(
                             ui,
                             &mut self.launcher_config,
